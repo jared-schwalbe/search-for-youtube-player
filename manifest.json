@@ -1,0 +1,25 @@
+{
+  "manifest_version": 2,
+
+  "name": "Search for YouTube Player",
+  "description": "Add search function to the YouTube video player for videos with closed captions.",
+  "author": "Jared Schwalbe",
+  "version": "0.1.0",
+
+  "background": {
+    "persistent": true,
+    "page": "bg.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "jquery-3.1.1.min.js",
+        "app.js"
+      ],
+      "run_at": "document_end"
+    }
+  ]
+}
