@@ -1,28 +1,21 @@
 /**
  * Search for YouTube Player
  *
- * Author: Jared Schwalbe
- * Version: 0.1.0
+ * @author: Jared Schwalbe
+ * @version: 1.0.0
  */
 
  /**
   * FIXES:
-  * - Redraw the search menu when the video changes size
-  *   - Difficult
-  * - When search menu is open, attempt to stop the mouseleave event on the video
-  *   - Difficult
-  *   - If I can't get it to work maybe just hide the search menu on mouse leave (maybe?)
-  * - Stop propagation when clicking outside the search menu
-  *   - Difficult
+  * - Hide 'search transcript' tooltip when ytp-chrome-bottom gets hidden
   * - Fix bug where hovering over search menu is the first thing hovered over and the tooltip doesn't show up since 'top' isn't set
-  * - Scale search menu (bigger when in full screen)
-  * - Hide 'search transcript' tooltip when ytp-chrome-bottom gets hidden (opacity gets set to 0 I think)
+  *   - The best way to fix this, because it affects some other small bugs, is to actually set the top and don't rely on it already being set
   *
   * NEW FEATURES:
-  * - Update the current result as time goes on in the video
-  * - Add yellow little bars on the timeline at the result timestamps
+  * - Update the current result as time goes on in the video (Definitely leaning towards this)
   * - Make search feature word based instead of character based (maybe?)
   * - Omit multiple results in the same chunk (maybe?)
+  * - Add yellow little bars on the timeline at the result timestamps (maybe?)
   */
 
 /**
@@ -33,6 +26,7 @@ var results = [];
 var currQuery = '';
 var currResult = -1;
 var flag = 0;
+var updateTimeInterval;
 
 /**
  * Parses the HTML of the transcript found on the page and loads it into the
@@ -140,17 +134,17 @@ var executeSearch = function(direction) {
  */
 var insertSearchMenu = function() {
     var searchMenuHTML = `
-        <div class="ytp-popup ytp-search-menu" data-layer="7" style="display: none;">
-            <div class="ytp-search-left-wrapper">
-                <input placeholder="Search..." />
+        <div class="ytp-popup ytp-search-menu" data-layer="7" style="z-index: 69; will-change: width,height; display: none;">
+            <div class="ytp-search-left-wrapper" style="float: left; overflow: hidden; width: auto;">
+                <input class="ytp-search-input" placeholder="Search..." style="background: transparent; border: none; outline: none; font-family: Roboto,Arial,Helvetica,sans-serif; color: #FFF; width: 100%;" />
             </div>
-            <div class="ytp-search-right-wrapper">
-                <span class="ytp-search-results"></span>
-                <button class="ytp-search-prev-btn">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwJSIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMzIgMzIiIHdpZHRoPSIxMDAlIj48cGF0aCBkPSJtIDEyLjU5LDIwLjM0IDQuNTgsLTQuNTkgLTQuNTgsLTQuNTkgMS40MSwtMS40MSA2LDYgLTYsNiB6IiBmaWxsPSIjZmZmIiAvPjwvc3ZnPg==" style="transform: scaleX(-1)" />
+            <div class="ytp-search-right-wrapper" style="float: right;">
+                <span class="ytp-search-results" style="float: left; font-family: Roboto,Arial,Helvetica,sans-serif; color: #AAA;"></span>
+                <button class="ytp-search-prev-btn" style="float: left; cursor: pointer; overflow: hidden;">
+                    <img class="ytp-search" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwJSIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMzIgMzIiIHdpZHRoPSIxMDAlIj48cGF0aCBkPSJtIDEyLjU5LDIwLjM0IDQuNTgsLTQuNTkgLTQuNTgsLTQuNTkgMS40MSwtMS40MSA2LDYgLTYsNiB6IiBmaWxsPSIjZmZmIiAvPjwvc3ZnPg==" style="transform: scaleX(-1)" />
                 </button>
-                <button class="ytp-search-next-btn">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwJSIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMzIgMzIiIHdpZHRoPSIxMDAlIj48cGF0aCBkPSJtIDEyLjU5LDIwLjM0IDQuNTgsLTQuNTkgLTQuNTgsLTQuNTkgMS40MSwtMS40MSA2LDYgLTYsNiB6IiBmaWxsPSIjZmZmIiAvPjwvc3ZnPg==" />
+                <button class="ytp-search-next-btn" style="float: left; cursor: pointer; overflow: hidden;">
+                    <img class="ytp-search" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwJSIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMzIgMzIiIHdpZHRoPSIxMDAlIj48cGF0aCBkPSJtIDEyLjU5LDIwLjM0IDQuNTgsLTQuNTkgLTQuNTgsLTQuNTkgMS40MSwtMS40MSA2LDYgLTYsNiB6IiBmaWxsPSIjZmZmIiAvPjwvc3ZnPg==" />
                 </button>
             </div>
         </div>
@@ -159,47 +153,22 @@ var insertSearchMenu = function() {
                 width: 240px;
                 height: 30px;
                 padding: 8px 15px 8px 15px;
-                z-index: 69;
-                will-change: width,height;
-            }
-            .ytp-search-left-wrapper {
-                float: left;
-                overflow: hidden;
-                width: auto;
-            }
-            .ytp-search-right-wrapper {
-                float: right;
             }
             .ytp-search-left-wrapper input {
-                background: transparent;
-                border: none;
-                outline: none;
-                font-family: Roboto,Arial,Helvetica,sans-serif;
                 font-size: 13px;
-                color: #FFF;
-                width: 100%;
                 height: 26px;
             }
             .ytp-search-results {
-                float: left;
-                font-family: Roboto,Arial,Helvetica,sans-serif;
                 font-size: 13px;
-                color: #AAA;
                 margin-top: 7px;
                 margin-left: 12px;
                 margin-right: 12px;
             }
             .ytp-search-prev-btn {
-                float: left;
-                cursor: pointer;
-                overflow: hidden;
                 margin-top: 7px;
                 margin-right: 10px;
             }
             .ytp-search-next-btn {
-                float: left;
-                cursor: pointer;
-                overflow: hidden;
                 margin-top: 7px;
             }
             .ytp-search-next-btn img,
@@ -208,6 +177,36 @@ var insertSearchMenu = function() {
                 height: 30px;
                 margin: -10px;
                 clip-path: inset(9px 11px 9px 11px);
+            }
+
+            .ytp-search-menu-fs {
+                width: 340px;
+                height: 40px;
+                padding: 10px 18px 10px 18px;
+            }
+            .ytp-search-left-wrapper-fs input {
+                font-size: 20px;
+                height: 36px;
+            }
+            .ytp-search-results-fs {
+                font-size: 20px;
+                margin-top: 7px;
+                margin-left: 12px;
+                margin-right: 12px;
+            }
+            .ytp-search-prev-btn-fs {
+                margin-top: 13px;
+                margin-right: 10px;
+            }
+            .ytp-search-next-btn-fs {
+                margin-top: 13px;
+            }
+            .ytp-search-next-btn-fs img,
+            .ytp-search-prev-btn-fs img {
+                width: 40px;
+                height: 40px;
+                margin: -12px;
+                clip-path: inset(12px 15px 12px 15px);
             }
         </style>
     `;
@@ -253,6 +252,29 @@ var insertSearchMenu = function() {
             $('video').get(0).play();
         }
     });
+
+    new ResizeSensor($('.html5-video-player'), function() {
+        if ($('.ytp-search-menu').is(':visible')) {
+            hideSearchMenu();
+            showSearchMenu();
+        }
+    });
+
+    $(document).on ('webkitfullscreenchange', function() {
+        if (document.webkitIsFullScreen) {
+            $('.ytp-search-menu').addClass('ytp-search-menu-fs');
+            $('.ytp-search-left-wrapper').addClass('ytp-search-left-wrapper-fs');
+            $('.ytp-search-results').addClass('ytp-search-results-fs');
+            $('.ytp-search-prev-btn').addClass('ytp-search-prev-btn-fs');
+            $('.ytp-search-next-btn').addClass('ytp-search-next-btn-fs');
+        } else {
+            $('.ytp-search-menu').removeClass('ytp-search-menu-fs');
+            $('.ytp-search-left-wrapper').removeClass('ytp-search-left-wrapper-fs');
+            $('.ytp-search-results').removeClass('ytp-search-results-fs');
+            $('.ytp-search-prev-btn').removeClass('ytp-search-prev-btn-fs');
+            $('.ytp-search-next-btn').removeClass('ytp-search-next-btn-fs');
+        }
+    });
 }
 
 /**
@@ -271,8 +293,11 @@ var showSearchMenu = function() {
         'left': newLeft + 'px',
         'right': ''
     });
+
     $('.ytp-settings-menu').hide();
     $('.ytp-search-menu').show();
+
+    updateSearchLabel(currResult + 1, results.length);
     $('.ytp-search-left-wrapper input').focus();
 
     if ($('.ytp-search-results').text().trim() == '' ||
@@ -280,10 +305,16 @@ var showSearchMenu = function() {
         updateSearchLabel(0, 0);
     }
 
-    // Would be better if I handled the mouseleave/mouseover events for the video
-    $('.ytp-chrome-bottom').css({'opacity': '1'});
-    $('.ytp-gradient-bottom').css({'opacity': '1'});
-    $('.ytp-tooltip').css({'opacity': '0'});
+    $('.ytp-chrome-bottom').css('opacity', '1');
+    $('.ytp-gradient-bottom').css('opacity', '1');
+    $('.ytp-tooltip').css('opacity', '0');
+
+    updateTimeInterval = setInterval(function() {
+        var video = $('video').get(0);
+        $('.ytp-time-current').text(formatTime(video.currentTime));
+        var progressPercent = video.currentTime / video.duration;
+        $('.ytp-play-progress').css('transform', 'scaleX(' + progressPercent + ')');
+    }, 100);
 
     setTimeout(function() {
         $(document).on('click', '*', clickOutsideSearchMenu);
@@ -306,8 +337,8 @@ var escSearchMenu = function(e) {
  */
 var clickOutsideSearchMenu = function(e) {
     var eClass = $(e.target).attr('class');
-    if (typeof eClass !== 'undefined' && !eClass.includes('ytp-search')) {
-        e.stopPropagation(); // not sure if this is helping here
+    if (typeof eClass === 'undefined' || !eClass.includes('ytp-search')) {
+        e.stopPropagation(); // this isn't working like I want it to :(
         hideSearchMenu();
     }
 }
@@ -317,11 +348,12 @@ var clickOutsideSearchMenu = function(e) {
  */
 var hideSearchMenu = function() {
     $('.ytp-search-menu').hide();
-    // Would be better if I handled the mouseleave/mouseover events for the video
-    $('.ytp-chrome-bottom').css({'opacity': ''});
-    $('.ytp-gradiant-bottom').css({'opacity': ''})
-    $('.ytp-tooltip').css({'opacity': ''});
 
+    $('.ytp-chrome-bottom').css('opacity', '');
+    $('.ytp-gradiant-bottom').css('opacity', '')
+    $('.ytp-tooltip').css('opacity', '');
+
+    clearInterval(updateTimeInterval);
     $(document).unbind('click', clickOutsideSearchMenu);
     $(document).unbind('keyup', escSearchMenu);
 }
@@ -414,6 +446,32 @@ var updateSearchLabel = function(curr, total) {
 }
 
 /**
+ * Formats the time to YouTube's standards given the amount of seconds.
+ */
+var formatTime = function(seconds) {
+    hours = Math.floor(seconds / 3600);
+    minutes = Math.floor(seconds / 60);
+    minutes = minutes % 60;
+    seconds = Math.floor(seconds % 60);
+    seconds = (seconds >= 10) ? seconds : "0" + seconds;
+
+    output = "";
+    if (hours > 0) {
+    	output += hours + ":";
+        if (minutes < 10) {
+      	    output += "0" + minutes;
+        } else {
+      	    output += minutes;
+        }
+    } else {
+    	output += minutes;
+    }
+    output += ":" + seconds;
+
+    return output;
+}
+
+/**
  * Main entry point essentially. Fires when the tab URL changes.
  * This was the best solution I could come up with since YouTube pushes to the
  * history and doesn't actually refresh the page.
@@ -445,6 +503,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                             }
                             currResult = -1;
                             currQuery = '';
+                            clearInterval(updateTimeInterval);
                         }
                     } else {
                         $('#action-panel-overflow-button').click();
