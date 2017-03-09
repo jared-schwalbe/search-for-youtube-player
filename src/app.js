@@ -2,21 +2,8 @@
  * Search for YouTube Player
  *
  * @author: Jared Schwalbe
- * @version: 1.0.0
+ * @version: 1.0.1
  */
-
- /**
-  * FIXES:
-  * - Hide 'search transcript' tooltip when ytp-chrome-bottom gets hidden
-  * - Fix bug where hovering over search menu is the first thing hovered over and the tooltip doesn't show up since 'top' isn't set
-  *   - The best way to fix this, because it affects some other small bugs, is to actually set the top and don't rely on it already being set
-  *
-  * NEW FEATURES:
-  * - Update the current result as time goes on in the video (Definitely leaning towards this)
-  * - Make search feature word based instead of character based (maybe?)
-  * - Omit multiple results in the same chunk (maybe?)
-  * - Add yellow little bars on the timeline at the result timestamps (maybe?)
-  */
 
 /**
  * Global variables
@@ -195,11 +182,11 @@ var insertSearchMenu = function() {
                 margin-right: 12px;
             }
             .ytp-search-prev-btn-fs {
-                margin-top: 13px;
+                margin-top: 12px;
                 margin-right: 10px;
             }
             .ytp-search-next-btn-fs {
-                margin-top: 13px;
+                margin-top: 12px;
             }
             .ytp-search-next-btn-fs img,
             .ytp-search-prev-btn-fs img {
