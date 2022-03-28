@@ -2,7 +2,7 @@
  * Search for YouTube Player
  *
  * @author: Jared Schwalbe
- * @version: 1.0.1
+ * @version: 2.0.0
  */
 
 /**
@@ -24,9 +24,14 @@ var updateTimeInterval;
 var parseTranscript = function(transcriptHTML) {
     transcript = [];
 
-    $(transcriptHTML).find('div.caption-line-text').each(function() {
-        var time = $(this).parent().attr('data-time');
-        var text = $(this).text();
+    $(transcriptHTML).find('ytd-transcript-segment-renderer').each(function() {
+        var timestamp = $(this).find('.segment-timestamp').text();
+        timestamp = timestamp.replace('\n', '');
+        timestamp = timestamp.trim();
+        var [minutes, seconds] = timestamp.split(':');
+        var time = parseInt(minutes) * 60 + parseInt(seconds);
+
+        var text = $(this).find('.segment-text').text();
         text = text.toLowerCase();
         text = text.replace(/\[.*\]/g, '');
         text = text.replace(/.*:/g, '');
@@ -35,10 +40,7 @@ var parseTranscript = function(transcriptHTML) {
         text = text.replace(/  +/g, ' ');
         text = text.trim();
 
-        transcript.push({
-            time: Math.floor(time),
-            text: text
-        });
+        transcript.push({ time, text });
     });
 }
 
@@ -57,7 +59,7 @@ var searchTranscript = function(query) {
 
     var indicies = [];
     for (i = 0; i < fullTranscriptSpaces.length; ++i) {
-        if (fullTranscriptSpaces.substring(i, i + query.length) == query) {
+        if (fullTranscriptSpaces.substring(i, i + query.length) === query) {
             indicies.push(i);
         }
     }
@@ -74,7 +76,7 @@ var searchTranscript = function(query) {
 /**
  * Performs the search, updates the UI.
  *
- * @param direction forward|backward
+ * @param direction forward | backward
  */
 var executeSearch = function(direction) {
     currQuery = $('.ytp-search-left-wrapper input').val().trim();
@@ -88,7 +90,7 @@ var executeSearch = function(direction) {
     currentTime = $('video').get(0).currentTime;
     currResult = -1;
 
-    if (direction == 'forward') {
+    if (direction === 'forward') {
         if (results.length > 0) currResult = 0;
         for (i = 0; i < results.length; i++) {
             if (results[i] >= currentTime) {
@@ -106,7 +108,7 @@ var executeSearch = function(direction) {
         }
     }
 
-    if (currResult == -1) {
+    if (currResult === -1) {
         updateSearchLabel(0, 0);
     } else {
         updateSearchLabel(currResult + 1, results.length);
@@ -154,9 +156,15 @@ var insertSearchMenu = function() {
             .ytp-search-prev-btn {
                 margin-top: 7px;
                 margin-right: 10px;
+                border: none;
+                outline: none;
+                background: none;
             }
             .ytp-search-next-btn {
                 margin-top: 7px;
+                border: none;
+                outline: none;
+                background: none;
             }
             .ytp-search-next-btn img,
             .ytp-search-prev-btn img {
@@ -201,7 +209,7 @@ var insertSearchMenu = function() {
     $('.ytp-settings-menu').after(searchMenuHTML);
 
     $('.ytp-search-left-wrapper input').on('keydown', function(e) {
-        if (e.keyCode == 13) {
+        if (e.keyCode === 13) {
             e.preventDefault();
             executeSearch('forward');
         }
@@ -209,15 +217,15 @@ var insertSearchMenu = function() {
     });
 
     $('.ytp-search-next-btn').on('click', function() {
-        if ($('.ytp-search-left-wrapper input').val().trim() == '') {
+        if ($('.ytp-search-left-wrapper input').val().trim() === '') {
             updateSearchLabel(0, 0);
             return;
         }
 
-        if (currQuery != $('.ytp-search-left-wrapper input').val().trim() || currResult == -1) {
+        if (currQuery != $('.ytp-search-left-wrapper input').val().trim() || currResult === -1) {
             executeSearch('forward');
         } else {
-            (currResult == results.length - 1) ? currResult = 0 : currResult++;
+            (currResult === results.length - 1) ? currResult = 0 : currResult++;
             updateSearchLabel(currResult + 1, results.length);
             $('video').get(0).currentTime = results[currResult];
             $('video').get(0).play();
@@ -225,15 +233,15 @@ var insertSearchMenu = function() {
     });
 
     $('.ytp-search-prev-btn').on('click', function() {
-        if ($('.ytp-search-left-wrapper input').val().trim() == '') {
+        if ($('.ytp-search-left-wrapper input').val().trim() === '') {
             updateSearchLabel(0, 0);
             return;
         }
 
-        if ($('.ytp-search-left-wrapper input').val().trim() != currQuery || currResult == -1) {
+        if ($('.ytp-search-left-wrapper input').val().trim() != currQuery || currResult === -1) {
             executeSearch('backward');
         } else {
-            (currResult == 0) ? currResult = results.length - 1 : currResult--;
+            (currResult === 0) ? currResult = results.length - 1 : currResult--;
             updateSearchLabel(currResult + 1, results.length);
             $('video').get(0).currentTime = results[currResult];
             $('video').get(0).play();
@@ -287,8 +295,8 @@ var showSearchMenu = function() {
     updateSearchLabel(currResult + 1, results.length);
     $('.ytp-search-left-wrapper input').focus();
 
-    if ($('.ytp-search-results').text().trim() == '' ||
-        $('.ytp-search-left-wrapper input').val().trim() == '') {
+    if ($('.ytp-search-results').text().trim() === '' ||
+        $('.ytp-search-left-wrapper input').val().trim() === '') {
         updateSearchLabel(0, 0);
     }
 
@@ -315,7 +323,9 @@ var showSearchMenu = function() {
  * Gets binded in showSearchMenu() and unbinded in hideSearchMenu().
  */
 var escSearchMenu = function(e) {
-    if (e.keyCode == 27) hideSearchMenu();
+    if (e.keyCode === 27) {
+        hideSearchMenu();
+    }
 }
 
 /**
@@ -366,7 +376,7 @@ var insertSearchButton = function() {
             'text-align': 'center'
         });
 
-        $('.ytp-tooltip-text').text('Search Transcript');
+        $('.ytp-tooltip-text').text('Search transcript');
         $('.ytp-tooltip-text').css({
             'display': 'block',
             'whitespace': 'nowrap'
@@ -375,10 +385,7 @@ var insertSearchButton = function() {
         if ($(tooltip).hasClass('ytp-preview')) {
             var originalTop = $(tooltip).position().top;
             var bgHeight = $('.ytp-tooltip-bg').outerHeight();
-            var textHeight = $('.ytp-tooltip-text-wrapper').outerHeight();
-            var tooltipPaddingTop = parseInt($(tooltip).css('padding-top').replace('px', ''));
-            var tooltipPaddingBot = parseInt($(tooltip).css('padding-bottom').replace('px', ''));
-            var newTop = originalTop + bgHeight - textHeight + tooltipPaddingTop + tooltipPaddingBot;
+            var newTop = originalTop + bgHeight + 8;
 
             $(tooltip).css('top', newTop + 'px');
             $(tooltip).removeClass('ytp-preview');
@@ -458,18 +465,27 @@ var formatTime = function(seconds) {
     return output;
 }
 
-/**
- * Main entry point essentially. Fires when the tab URL changes.
- * This was the best solution I could come up with since YouTube pushes to the
- * history and doesn't actually refresh the page.
- */
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+function openTranscript() {
+    $("ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-searchable-transcript'")
+        .attr('visibility', 'ENGAGEMENT_PANEL_VISIBILITY_EXPANDED');
+    $("ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-searchable-transcript'")
+        .css({ position: 'absolute', visibility: 'hidden' });
+}
+
+function closeTranscript() {
+    $("ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-searchable-transcript'")
+        .attr('visibility', 'ENGAGEMENT_PANEL_VISIBILITY_HIDDEN');
+    $("ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-searchable-transcript'")
+        .css({ position: 'relative', visibility: 'inherit' });
+}
+
+function main() {
     flag = 0;
 
     $('video').on('loadedmetadata', function() {
-        (flag == 0) ? flag = 1 : flag = 2;
+        (flag === 0) ? flag = 1 : flag = 2;
 
-        if (flag == 1) {
+        if (flag === 1) {
             if ($('.ytp-search-menu').length) {
                 $('.ytp-search-menu').remove();
             }
@@ -478,27 +494,28 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             }
             if ($('.ytp-subtitles-button').is(':visible')) {
                 var loadTranscript = setInterval(function() {
-                    if ($('#transcript-scrollbox').length) {
-                        if ($('#transcript-scrollbox').html().length) {
-                            clearInterval(loadTranscript);
-                            parseTranscript($('#transcript-scrollbox').html());
-                            if (!$('.ytp-search-button').length) {
-                                insertSearchButton();
-                            }
-                            if (!$('.ytp-search-menu').length) {
-                                insertSearchMenu();
-                            }
-                            currResult = -1;
-                            currQuery = '';
-                            clearInterval(updateTimeInterval);
+                    if ($('ytd-transcript-segment-renderer').length) {
+                        clearInterval(loadTranscript);
+                        parseTranscript($('ytd-transcript-segment-list-renderer').html());
+                        closeTranscript();
+                        if (!$('.ytp-search-button').length) {
+                            insertSearchButton();
                         }
+                        if (!$('.ytp-search-menu').length) {
+                            insertSearchMenu();
+                        }
+                        currResult = -1;
+                        currQuery = '';
+                        clearInterval(updateTimeInterval);
                     } else {
-                        $('#action-panel-overflow-button').click();
-                        $('.action-panel-trigger-transcript').click();
-                        $('#watch-action-panels').css('display', 'none');
+                        openTranscript();
                     }
                 }, 100);
             }
         }
     });
-});
+}
+
+
+window.onload = main;
+chrome.runtime.onMessage.addListener(main);
