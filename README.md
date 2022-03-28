@@ -1,4 +1,4 @@
-## Search for YouTube Player - A Google Chrome Browser Extension ##
+## Search for YouTube Player - Google Chrome Browser Extension ##
 
 #### Features ####
 
