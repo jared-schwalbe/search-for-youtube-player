@@ -25,8 +25,6 @@ function parseTranscript(transcriptHTML) {
 
     return { text, timestamp };
   });
-
-  console.log(transcript);
 }
 
 function searchTranscript(query) {
@@ -131,7 +129,7 @@ function insertSearchMenu() {
   });
 
   // add/remove fullscreen styling
-  $(document).on('webkitfullscreenchange', () => {
+  $(document).on('fullscreenchange', () => {
     if (document.webkitIsFullScreen) {
       $(selectors.SEARCH_MENU).addClass(classes.SEARCH_MENU_FULLSCREEN);
       $(selectors.SEARCH_LEFT_WRAPPER).addClass(classes.SEARCH_LEFT_WRAPPER_FULLSCREEN);
@@ -332,6 +330,29 @@ function closeTranscript() {
   $(selectors.TRANSCRIPT).css({ position: 'relative', visibility: 'inherit' });
 }
 
+function run() {
+  if ($(selectors.SUBTITLES_BUTTON).is(':visible')) {
+    const loadTranscript = setInterval(() => {
+      if ($(selectors.TRANSCRIPT_ITEM).length) {
+        clearInterval(loadTranscript);
+        parseTranscript($(selectors.TRANSCRIPT_LIST).html());
+        closeTranscript();
+        if (!$(selectors.SEARCH_BUTTON).length) {
+          insertSearchButton();
+        }
+        if (!$(selectors.SEARCH_MENU).length) {
+          insertSearchMenu();
+        }
+      } else {
+        openTranscript();
+      }
+    }, 100);
+  } else {
+    $(selectors.SEARCH_BUTTON).remove();
+    $(selectors.SEARCH_MENU).remove();
+  }
+}
+
 function main() {
   // reset everything
   transcript = [];
@@ -340,33 +361,18 @@ function main() {
   searchResult = -1;
   clearInterval(updateTimeInterval);
 
+  // remove added the search elements
+  $(selectors.SEARCH_BUTTON).remove();
   $(selectors.SEARCH_MENU).remove();
 
-  $(selectors.VIDEO).on('loadedmetadata', () => {
-    if ($(selectors.SUBTITLES_BUTTON).is(':visible')) {
-      const loadTranscript = setInterval(() => {
-        if ($(selectors.TRANSCRIPT_ITEM).length) {
-          clearInterval(loadTranscript);
-          parseTranscript($(selectors.TRANSCRIPT_LIST).html());
-          closeTranscript();
-          if (!$(selectors.SEARCH_BUTTON).length) {
-            insertSearchButton();
-          }
-          if (!$(selectors.SEARCH_MENU).length) {
-            insertSearchMenu();
-          }
-        } else {
-          openTranscript();
-        }
-      }, 100);
-    } else {
-      $(selectors.SEARCH_BUTTON).remove();
-      $(selectors.SEARCH_MENU).remove();
-    }
-  });
+  // run now if the video is already playing or after it finishes loading
+  if ($(selectors.VIDEO).get(0).currentTime > 0) {
+    run();
+  } else {
+    $(selectors.VIDEO).on('loadedmetadata', run);
+  }
 }
 
-// run on load and when history changes
-// youtube uses the history API when changing videos
-window.onload = main;
-chrome.runtime.onMessage.addListener(main);
+// run immediately (onload) and when youtube navigates to a new video
+main();
+window.addEventListener('yt-navigate-start', main, true);

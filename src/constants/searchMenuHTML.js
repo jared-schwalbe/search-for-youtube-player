@@ -15,7 +15,7 @@ const searchMenuHTML = `
   </div>
   <style>
     .ytp-search-menu {
-      width: 240px;
+      width: 280px;
       height: 30px;
       padding: 8px 15px 8px 15px;
     }
