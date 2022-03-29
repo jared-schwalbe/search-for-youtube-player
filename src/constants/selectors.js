@@ -18,6 +18,7 @@ const selectors = {
   TOOLTIP: '.ytp-tooltip',
   TOOLTIP_BG: '.ytp-tooltip-bg',
   TOOLTIP_TEXT: '.ytp-tooltip-text',
+  TOOLTIP_TEXT_WRAPPER: '.ytp-tooltip-text-wrapper',
   TRANSCRIPT: 'ytd-engagement-panel-section-list-renderer[target-id=\'engagement-panel-searchable-transcript\'',
   TRANSCRIPT_LIST: 'ytd-transcript-segment-list-renderer',
   TRANSCRIPT_ITEM: 'ytd-transcript-segment-renderer',

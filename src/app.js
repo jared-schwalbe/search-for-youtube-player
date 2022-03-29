@@ -229,6 +229,10 @@ function insertSearchButton() {
       return;
     }
 
+    if (!$(selectors.TOOLTIP_TEXT_WRAPPER).parent().hasClass(classes.TOOLTIP)) {
+      $(selectors.TOOLTIP_TEXT_WRAPPER).parent().addClass(classes.TOOLTIP);
+    }
+
     $(selectors.TOOLTIP).css({
       'display': 'block',
       'max-width': 'none',
@@ -243,11 +247,6 @@ function insertSearchButton() {
     });
 
     if ($(selectors.TOOLTIP).hasClass(classes.PREVIEW)) {
-      const originalTop = $(tooltip).position().top;
-      const bgHeight = $(selectors.TOOLTIP_BG).outerHeight();
-      const newTop = originalTop + bgHeight + 8; // needs to be looked at again
-
-      $(selectors.TOOLTIP).css('top', `${newTop}px`);
       $(selectors.TOOLTIP).removeClass(classes.PREVIEW);
       $(selectors.TOOLTIP_BG).css('background', '');
     }
@@ -258,7 +257,14 @@ function insertSearchButton() {
     const tooltipMidpoint = $(selectors.TOOLTIP).outerWidth() / 2;
     const newLeft = controlsLeft + searchBtnLeft + searchBtnMidpoint - tooltipMidpoint;
 
-    $(selectors.TOOLTIP).css('left', `${newLeft}px`);
+    const videoHeight = $(selectors.VIDEO_PLAYER).height();
+    const offset = $(selectors.VIDEO_PLAYER).hasClass(classes.FULLSCREEN) ? 94 : 87;
+    const newTop = videoHeight - offset;
+
+    $(selectors.TOOLTIP).css({
+      'left': `${newLeft}px`,
+      'top': `${newTop}px`
+    });
 
     setTimeout(() => {
       $(selectors.TOOLTIP).css('display', 'block');
@@ -266,7 +272,7 @@ function insertSearchButton() {
   });
 
   $(searchButton).on('mouseleave', () => {
-    if ($(selectors.TOOLTIP).length > 0) {
+    if ($(selectors.TOOLTIP).length) {
       $(selectors.TOOLTIP).css('display', 'none');
     }
   });
