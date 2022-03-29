@@ -1,521 +1,372 @@
-/**
- * Search for YouTube Player
- *
- * @author: Jared Schwalbe
- * @version: 2.0.0
- */
+let transcript = [];      // parsed transcript
+let results = [];         // results from the current query
+let searchQuery = '';     // current query in the search field
+let searchResult = -1;    // current index in the results array
+let updateTimeInterval;   // interval function to update the progress bar
 
-/**
- * Global variables
- */
-var transcript = [];
-var results = [];
-var currQuery = '';
-var currResult = -1;
-var flag = 0;
-var updateTimeInterval;
+function parseTranscript(transcriptHTML) {
+  transcript = $(transcriptHTML).find(selectors.TRANSCRIPT_ITEM).map((i, item) => {
+    const text = $(item).find(selectors.TRANSCRIPT_TEXT)
+      .text()
+      .toLowerCase()
+      .replace(/\[.*\]/g, '')
+      .replace(/.*:/g, '')
+      .replace(/[^A-Za-z0-9\n' ]/g, '')
+      .replace('\n', ' ')
+      .replace(/  +/g, ' ')
+      .trim();
 
-/**
- * Parses the HTML of the transcript found on the page and loads it into the
- * transcript array.
- *
- * @param transcriptHTML string of html tags
- */
-var parseTranscript = function(transcriptHTML) {
-    transcript = [];
+    const timestamp = $(item).find(selectors.TRANSCRIPT_TIMESTAMP)
+      .text()
+      .replace('\n', '')
+      .trim()
+      .split(':')
+      .reduce((s, e, i, a) => s + parseInt(e) * Math.pow(60, a.length - i - 1), 0);
 
-    $(transcriptHTML).find('ytd-transcript-segment-renderer').each(function() {
-        var timestamp = $(this).find('.segment-timestamp').text();
-        timestamp = timestamp.replace('\n', '');
-        timestamp = timestamp.trim();
-        var [minutes, seconds] = timestamp.split(':');
-        var time = parseInt(minutes) * 60 + parseInt(seconds);
+    return { text, timestamp };
+  });
 
-        var text = $(this).find('.segment-text').text();
-        text = text.toLowerCase();
-        text = text.replace(/\[.*\]/g, '');
-        text = text.replace(/.*:/g, '');
-        text = text.replace(/[^A-Za-z0-9\n' ]/g, '');
-        text = text.replace('\n', ' ');
-        text = text.replace(/  +/g, ' ');
-        text = text.trim();
-
-        transcript.push({ time, text });
-    });
+  console.log(transcript);
 }
 
-/**
- * Searches the transcript array for all timestamps where the query is found.
- *
- * @param query string to search for
- * @return array of timestamps
- */
-var searchTranscript = function(query) {
-    query = query.toLowerCase();
-    query = query.trim();
+function searchTranscript(query) {
+  const transcriptText = transcript.map((i, item) => item.text).get();
+  const fullTranscript = transcriptText.join(' ');
+  const timestamps = [];
 
-    var fullTranscriptBars = $.map(transcript, function(obj) { return obj.text; }).join('|');
-    var fullTranscriptSpaces = fullTranscriptBars.replace(/\|/g, ' ');
-
-    var indicies = [];
-    for (i = 0; i < fullTranscriptSpaces.length; ++i) {
-        if (fullTranscriptSpaces.substring(i, i + query.length) === query) {
-            indicies.push(i);
-        }
+  for (i = 0; i < fullTranscript.length; i++) {
+    if (fullTranscript.substring(i, i + query.length) === query) {
+      const index = transcriptText.join('|').substring(0, i).split('|').length - 1;
+      timestamps.push(transcript[index].timestamp);
     }
+  }
 
-    var returnArr = [];
-    for (i = 0; i < indicies.length; i++) {
-        var index = (fullTranscriptBars.substring(0, indicies[i]).match(/\|/g) || []).length;
-        returnArr.push(transcript[index].time);
-    }
-
-    return returnArr;
+  return Array.from(new Set(timestamps));
 }
 
-/**
- * Performs the search, updates the UI.
- *
- * @param direction forward | backward
- */
-var executeSearch = function(direction) {
-    currQuery = $('.ytp-search-left-wrapper input').val().trim();
+function getSearchInput() {
+  return $(selectors.SEARCH_INPUT).val().toLowerCase().trim();
+}
 
-    if (currQuery === '') {
-        updateSearchLabel(0, 0);
-        return;
+function executeSearch(direction) {
+  searchResult = -1;
+  searchQuery = getSearchInput();
+  results = searchTranscript(searchQuery);
+
+  if (searchQuery === '' || !results.length) {
+    updateSearchLabel(0, 0);
+    return;
+  }
+
+  const currentTime = $(selectors.VIDEO).get(0).currentTime;
+
+  if (direction === 'next') {
+    searchResult = 0;
+    for (i = 0; i < results.length; i++) {
+      if (results[i] >= currentTime) {
+        searchResult = i;
+        break;
+      }
     }
+  } else {
+    searchResult = results.length - 1;
+    for (i = results.length - 1; i >= 0; i--) {
+      if (results[i] <= currentTime) {
+        searchResult = i;
+        break;
+      }
+    }
+  }
 
-    results = searchTranscript(currQuery);
-    currentTime = $('video').get(0).currentTime;
-    currResult = -1;
+  playSearchResult();
+}
 
-    if (direction === 'forward') {
-        if (results.length > 0) currResult = 0;
-        for (i = 0; i < results.length; i++) {
-            if (results[i] >= currentTime) {
-                currResult = i;
-                break;
-            }
-        }
+// Injects the search menu after the settings menu. Then sets up the listeners for its children.
+function insertSearchMenu() {
+  $(selectors.SETTINGS_MENU).after(searchMenuHTML);
+
+  $(selectors.SEARCH_INPUT).on('keydown', e => {
+    if (getSearchInput() === '') {
+      updateSearchLabel(0, 0);
+    }
+    if (e.keyCode === 13) {
+      e.preventDefault();
+      executeSearch('next');
+    }
+    e.stopPropagation(); // IMPORTANT!! prevents shortcut keys
+  });
+
+  $(selectors.NEXT_BUTTON).on('click', () => {
+    if (searchQuery !== getSearchInput() || searchResult === -1) {
+      executeSearch('next');
     } else {
-        if (results.length > 0) currResult = results.length - 1;
-        for (i = results.length - 1; i >= 0; i--) {
-            if (results[i] <= currentTime) {
-                currResult = i;
-                break;
-            }
-        }
+      if (searchResult === results.length - 1) {
+        searchResult = 0;
+      } else {
+        searchResult++;
+      }
+      playSearchResult();
     }
+  });
 
-    if (currResult === -1) {
-        updateSearchLabel(0, 0);
+  $(selectors.PREV_BUTTON).on('click', () => {
+    if (searchQuery !== getSearchInput() || searchResult === -1) {
+      executeSearch('prev');
     } else {
-        updateSearchLabel(currResult + 1, results.length);
-        $('video').get(0).currentTime = results[currResult];
-        $('video').get(0).play();
+      if (searchResult === 0) {
+        searchResult = results.length - 1;
+      } else {
+        searchResult--;
+      }
+      playSearchResult();
     }
+  });
+
+  // detect video player resizing
+  new ResizeSensor($(selectors.VIDEO_PLAYER), () => {
+    if ($(selectors.SEARCH_MENU).is(':visible')) {
+      hideSearchMenu();
+      showSearchMenu();
+    }
+  });
+
+  // add/remove fullscreen styling
+  $(document).on('webkitfullscreenchange', () => {
+    if (document.webkitIsFullScreen) {
+      $(selectors.SEARCH_MENU).addClass(classes.SEARCH_MENU_FULLSCREEN);
+      $(selectors.SEARCH_LEFT_WRAPPER).addClass(classes.SEARCH_LEFT_WRAPPER_FULLSCREEN);
+      $(selectors.SEARCH_RESULTS).addClass(classes.SEARCH_RESULTS_FULLSCREEN);
+      $(selectors.PREV_BUTTON).addClass(classes.PREV_BUTTON_FULLSCREEN);
+      $(selectors.NEXT_BUTTON).addClass(classes.NEXT_BUTTON_FULLSCREEN);
+    } else {
+      $(selectors.SEARCH_MENU).removeClass(classes.SEARCH_MENU_FULLSCREEN);
+      $(selectors.SEARCH_LEFT_WRAPPER).removeClass(classes.SEARCH_LEFT_WRAPPER_FULLSCREEN);
+      $(selectors.SEARCH_RESULTS).removeClass(classes.SEARCH_RESULTS_FULLSCREEN);
+      $(selectors.PREV_BUTTON).removeClass(classes.PREV_BUTTON_FULLSCREEN);
+      $(selectors.NEXT_BUTTON).removeClass(classes.NEXT_BUTTON_FULLSCREEN);
+    }
+  });
 }
 
-/**
- * Injects the search menu after the settings menu. Then sets up the listeners
- * for it's children.
- */
-var insertSearchMenu = function() {
-    var searchMenuHTML = `
-        <div class="ytp-popup ytp-search-menu" data-layer="7" style="z-index: 69; will-change: width,height; display: none;">
-            <div class="ytp-search-left-wrapper" style="float: left; overflow: hidden; width: auto;">
-                <input class="ytp-search-input" placeholder="Search..." style="background: transparent; border: none; outline: none; font-family: Roboto,Arial,Helvetica,sans-serif; color: #FFF; width: 100%;" />
-            </div>
-            <div class="ytp-search-right-wrapper" style="float: right;">
-                <span class="ytp-search-results" style="float: left; font-family: Roboto,Arial,Helvetica,sans-serif; color: #AAA;"></span>
-                <button class="ytp-search-prev-btn" style="float: left; cursor: pointer; overflow: hidden;">
-                    <img class="ytp-search" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwJSIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMzIgMzIiIHdpZHRoPSIxMDAlIj48cGF0aCBkPSJtIDEyLjU5LDIwLjM0IDQuNTgsLTQuNTkgLTQuNTgsLTQuNTkgMS40MSwtMS40MSA2LDYgLTYsNiB6IiBmaWxsPSIjZmZmIiAvPjwvc3ZnPg==" style="transform: scaleX(-1)" />
-                </button>
-                <button class="ytp-search-next-btn" style="float: left; cursor: pointer; overflow: hidden;">
-                    <img class="ytp-search" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTAwJSIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMzIgMzIiIHdpZHRoPSIxMDAlIj48cGF0aCBkPSJtIDEyLjU5LDIwLjM0IDQuNTgsLTQuNTkgLTQuNTgsLTQuNTkgMS40MSwtMS40MSA2LDYgLTYsNiB6IiBmaWxsPSIjZmZmIiAvPjwvc3ZnPg==" />
-                </button>
-            </div>
-        </div>
-        <style>
-            .ytp-search-menu {
-                width: 240px;
-                height: 30px;
-                padding: 8px 15px 8px 15px;
-            }
-            .ytp-search-left-wrapper input {
-                font-size: 13px;
-                height: 26px;
-            }
-            .ytp-search-results {
-                font-size: 13px;
-                margin-top: 7px;
-                margin-left: 12px;
-                margin-right: 12px;
-            }
-            .ytp-search-prev-btn {
-                margin-top: 7px;
-                margin-right: 10px;
-                border: none;
-                outline: none;
-                background: none;
-            }
-            .ytp-search-next-btn {
-                margin-top: 7px;
-                border: none;
-                outline: none;
-                background: none;
-            }
-            .ytp-search-next-btn img,
-            .ytp-search-prev-btn img {
-                width: 30px;
-                height: 30px;
-                margin: -10px;
-                clip-path: inset(9px 11px 9px 11px);
-            }
+function showSearchMenu() {
+  const newBottom = $(selectors.SETTINGS_MENU).css('bottom');
+  const controlsLeft = $(selectors.CHROME_BOTTOM).position().left;
+  const searchBtnLeft = $(selectors.SEARCH_BUTTON).position().left;
+  const searchBtnMidpt = $(selectors.SEARCH_BUTTON).outerWidth() / 2;
+  const searchMenuMidpt = $(selectors.SEARCH_MENU).outerWidth() / 2;
+  const newLeft = controlsLeft + searchBtnLeft + searchBtnMidpt - searchMenuMidpt;
 
-            .ytp-search-menu-fs {
-                width: 340px;
-                height: 40px;
-                padding: 10px 18px 10px 18px;
-            }
-            .ytp-search-left-wrapper-fs input {
-                font-size: 20px;
-                height: 36px;
-            }
-            .ytp-search-results-fs {
-                font-size: 20px;
-                margin-top: 7px;
-                margin-left: 12px;
-                margin-right: 12px;
-            }
-            .ytp-search-prev-btn-fs {
-                margin-top: 12px;
-                margin-right: 10px;
-            }
-            .ytp-search-next-btn-fs {
-                margin-top: 12px;
-            }
-            .ytp-search-next-btn-fs img,
-            .ytp-search-prev-btn-fs img {
-                width: 40px;
-                height: 40px;
-                margin: -12px;
-                clip-path: inset(12px 15px 12px 15px);
-            }
-        </style>
-    `;
+  $(selectors.SEARCH_MENU).css({
+    'bottom': newBottom,
+    'left': `${newLeft}px`,
+    'right': ''
+  });
 
-    $('.ytp-settings-menu').after(searchMenuHTML);
+  $(selectors.SETTINGS_MENU).hide();
+  $(selectors.SEARCH_MENU).show();
 
-    $('.ytp-search-left-wrapper input').on('keydown', function(e) {
-        if (e.keyCode === 13) {
-            e.preventDefault();
-            executeSearch('forward');
-        }
-        e.stopPropagation(); // IMPORTANT!! prevents shortcut keys
-    });
+  updateSearchLabel(searchResult + 1, results.length);
+  $(selectors.SEARCH_INPUT).focus();
 
-    $('.ytp-search-next-btn').on('click', function() {
-        if ($('.ytp-search-left-wrapper input').val().trim() === '') {
-            updateSearchLabel(0, 0);
-            return;
-        }
+  if (
+    !$(selectors.SEARCH_INPUT).val() ||
+    $(selectors.SEARCH_INPUT).val().trim() === '' ||
+    $(selectors.SEARCH_RESULTS).text().trim() === ''
+  ) {
+    updateSearchLabel(0, 0);
+  }
 
-        if (currQuery != $('.ytp-search-left-wrapper input').val().trim() || currResult === -1) {
-            executeSearch('forward');
-        } else {
-            (currResult === results.length - 1) ? currResult = 0 : currResult++;
-            updateSearchLabel(currResult + 1, results.length);
-            $('video').get(0).currentTime = results[currResult];
-            $('video').get(0).play();
-        }
-    });
+  $(selectors.CHROME_BOTTOM).css('opacity', '1');
+  $(selectors.GRADIANT_BOTTOM).css('opacity', '1');
+  $(selectors.TOOLTIP).css('opacity', '0');
 
-    $('.ytp-search-prev-btn').on('click', function() {
-        if ($('.ytp-search-left-wrapper input').val().trim() === '') {
-            updateSearchLabel(0, 0);
-            return;
-        }
+  updateTimeInterval = setInterval(() => {
+    const { currentTime, duration } = $(selectors.VIDEO).get(0);
+    $(selectors.TIME_CURRENT).text(formatTime(currentTime));
+    $(selectors.PLAY_PROGRESS).css('transform', `scaleX(${currentTime / duration})`);
+  }, 100);
 
-        if ($('.ytp-search-left-wrapper input').val().trim() != currQuery || currResult === -1) {
-            executeSearch('backward');
-        } else {
-            (currResult === 0) ? currResult = results.length - 1 : currResult--;
-            updateSearchLabel(currResult + 1, results.length);
-            $('video').get(0).currentTime = results[currResult];
-            $('video').get(0).play();
-        }
-    });
+  setTimeout(() => {
+    $(document).on('click', '*', clickOutsideSearchMenu);
+  }, 100);
 
-    new ResizeSensor($('.html5-video-player'), function() {
-        if ($('.ytp-search-menu').is(':visible')) {
-            hideSearchMenu();
-            showSearchMenu();
-        }
-    });
-
-    $(document).on ('webkitfullscreenchange', function() {
-        if (document.webkitIsFullScreen) {
-            $('.ytp-search-menu').addClass('ytp-search-menu-fs');
-            $('.ytp-search-left-wrapper').addClass('ytp-search-left-wrapper-fs');
-            $('.ytp-search-results').addClass('ytp-search-results-fs');
-            $('.ytp-search-prev-btn').addClass('ytp-search-prev-btn-fs');
-            $('.ytp-search-next-btn').addClass('ytp-search-next-btn-fs');
-        } else {
-            $('.ytp-search-menu').removeClass('ytp-search-menu-fs');
-            $('.ytp-search-left-wrapper').removeClass('ytp-search-left-wrapper-fs');
-            $('.ytp-search-results').removeClass('ytp-search-results-fs');
-            $('.ytp-search-prev-btn').removeClass('ytp-search-prev-btn-fs');
-            $('.ytp-search-next-btn').removeClass('ytp-search-next-btn-fs');
-        }
-    });
+  $(document).on('keyup', escapeSearchMenu);
 }
 
-/**
- * Opens the search menu.
- */
-var showSearchMenu = function() {
-    var newBot = $('.ytp-settings-menu').css('bottom');
-    var controlsLeft = $('.ytp-chrome-bottom').position().left;
-    var searchBtnLeft = $('.ytp-search-button').position().left;
-    var searchBtnMidpt = $('.ytp-search-button').outerWidth() / 2;
-    var searchMenuMidpt = $('.ytp-search-menu').outerWidth() / 2;
-    var newLeft = controlsLeft + searchBtnLeft + searchBtnMidpt - searchMenuMidpt;
+function escapeSearchMenu(e) {
+  if (e.keyCode === 27) {
+    hideSearchMenu();
+  }
+}
 
-    $('.ytp-search-menu').css({
-        'bottom': newBot,
-        'left': newLeft + 'px',
-        'right': ''
-    });
+function clickOutsideSearchMenu(e) {
+  const eClass = $(e.target).attr('class');
+  if (typeof eClass === 'undefined' || !eClass.includes('ytp-search')) {
+    e.stopPropagation(); // this isn't working like I want it to :(
+    hideSearchMenu();
+  }
+}
 
-    $('.ytp-settings-menu').hide();
-    $('.ytp-search-menu').show();
+function hideSearchMenu() {
+  $(selectors.SEARCH_MENU).hide();
 
-    updateSearchLabel(currResult + 1, results.length);
-    $('.ytp-search-left-wrapper input').focus();
+  $(selectors.CHROME_BOTTOM).css('opacity', '');
+  $(selectors.GRADIANT_BOTTOM).css('opacity', '')
+  $(selectors.TOOLTIP).css('opacity', '');
 
-    if ($('.ytp-search-results').text().trim() === '' ||
-        $('.ytp-search-left-wrapper input').val().trim() === '') {
-        updateSearchLabel(0, 0);
+  clearInterval(updateTimeInterval);
+  $(document).unbind('click', clickOutsideSearchMenu);
+  $(document).unbind('keyup', escapeSearchMenu);
+}
+
+
+function insertSearchButton() {
+  const searchButton = document.createElement('button');
+  $(searchButton).addClass(classes.BUTTON);
+  $(searchButton).addClass(classes.SEARCH_BUTTON);
+  $(searchButton).html(searchButtonHTML);
+
+  $(searchButton).on('mouseover', () => {
+    if ($(selectors.SETTINGS_MENU).is(':visible') || $(selectors.SEARCH_MENU).is(':visible')) {
+      return;
     }
 
-    $('.ytp-chrome-bottom').css('opacity', '1');
-    $('.ytp-gradient-bottom').css('opacity', '1');
-    $('.ytp-tooltip').css('opacity', '0');
+    $(selectors.TOOLTIP).css({
+      'display': 'block',
+      'max-width': 'none',
+      'opacity': '1',
+      'text-align': 'center'
+    });
 
-    updateTimeInterval = setInterval(function() {
-        var video = $('video').get(0);
-        $('.ytp-time-current').text(formatTime(video.currentTime));
-        var progressPercent = video.currentTime / video.duration;
-        $('.ytp-play-progress').css('transform', 'scaleX(' + progressPercent + ')');
+    $(selectors.TOOLTIP_TEXT).text('Search transcript');
+    $(selectors.TOOLTIP_TEXT).css({
+      'display': 'block',
+      'whitespace': 'nowrap'
+    });
+
+    if ($(selectors.TOOLTIP).hasClass(classes.PREVIEW)) {
+      const originalTop = $(tooltip).position().top;
+      const bgHeight = $(selectors.TOOLTIP_BG).outerHeight();
+      const newTop = originalTop + bgHeight + 8; // needs to be looked at again
+
+      $(selectors.TOOLTIP).css('top', `${newTop}px`);
+      $(selectors.TOOLTIP).removeClass(classes.PREVIEW);
+      $(selectors.TOOLTIP_BG).css('background', '');
+    }
+
+    const controlsLeft = $(selectors.CHROME_BOTTOM).position().left;
+    const searchBtnLeft = $(selectors.SEARCH_BUTTON).position().left;
+    const searchBtnMidpoint = $(selectors.SEARCH_BUTTON).outerWidth() / 2;
+    const tooltipMidpoint = $(selectors.TOOLTIP).outerWidth() / 2;
+    const newLeft = controlsLeft + searchBtnLeft + searchBtnMidpoint - tooltipMidpoint;
+
+    $(selectors.TOOLTIP).css('left', `${newLeft}px`);
+
+    setTimeout(() => {
+      $(selectors.TOOLTIP).css('display', 'block');
     }, 100);
+  });
 
-    setTimeout(function() {
-        $(document).on('click', '*', clickOutsideSearchMenu);
-    }, 100);
-
-    $(document).on('keyup', escSearchMenu);
-}
-
-/**
- * Listener function for esc when the search menu is open.
- * Gets binded in showSearchMenu() and unbinded in hideSearchMenu().
- */
-var escSearchMenu = function(e) {
-    if (e.keyCode === 27) {
-        hideSearchMenu();
+  $(searchButton).on('mouseleave', () => {
+    if ($(selectors.TOOLTIP).length > 0) {
+      $(selectors.TOOLTIP).css('display', 'none');
     }
-}
+  });
 
-/**
- * Listener function for clicking outside the search menu when the search
- * menu is open. Gets binded in showSearchMenu() and unbinded in hideSearchMenu().
- */
-var clickOutsideSearchMenu = function(e) {
-    var eClass = $(e.target).attr('class');
-    if (typeof eClass === 'undefined' || !eClass.includes('ytp-search')) {
-        e.stopPropagation(); // this isn't working like I want it to :(
-        hideSearchMenu();
+  $(searchButton).on('click', e => {
+    if (!$(selectors.SEARCH_MENU).is(':visible')) {
+      showSearchMenu();
+      $(selectors.TOOLTIP).hide();
+    } else {
+      hideSearchMenu();
+      $(selectors.SEARCH_BUTTON).trigger('mouseover');
     }
+  });
+
+  $(selectors.RIGHT_CONTROLS).prepend(searchButton);
 }
 
-/**
- * Closes the search menu.
- */
-var hideSearchMenu = function() {
-    $('.ytp-search-menu').hide();
+function updateSearchLabel(current, total) {
+  $(selectors.SEARCH_RESULTS).text(current + ' of ' + total);
 
-    $('.ytp-chrome-bottom').css('opacity', '');
-    $('.ytp-gradiant-bottom').css('opacity', '')
-    $('.ytp-tooltip').css('opacity', '');
+  const searchMenuWidth = $(selectors.SEARCH_MENU).width();
+  const searchRightWidth = $(selectors.SEARCH_RIGHT_WRAPPER).width();
+  const newWidth = searchMenuWidth - searchRightWidth;
 
-    clearInterval(updateTimeInterval);
-    $(document).unbind('click', clickOutsideSearchMenu);
-    $(document).unbind('keyup', escSearchMenu);
+  $(selectors.SEARCH_LEFT_WRAPPER).css('width', `${newWidth}px`);
 }
 
-/**
- * Create the search button and set up it's listeners.
- */
-var insertSearchButton = function() {
-    var searchButton = document.createElement('button');
-    $(searchButton).addClass('ytp-button ytp-search-button');
-    $(searchButton).html('<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="-250 -250 946.25 946.25"><g><path d="M318.75,280.5h-20.4l-7.649-7.65c25.5-28.05,40.8-66.3,40.8-107.1C331.5,73.95,257.55,0,165.75,0S0,73.95,0,165.75 S73.95,331.5,165.75,331.5c40.8,0,79.05-15.3,107.1-40.8l7.65,7.649v20.4L408,446.25L446.25,408L318.75,280.5z M165.75,280.5 C102,280.5,51,229.5,51,165.75S102,51,165.75,51S280.5,102,280.5,165.75S229.5,280.5,165.75,280.5z" id="cfytp-svg-40"/></g><use class="ytp-svg-shadow" xlink:href="#cfytp-svg-40"></use><use class="ytp-svg-fill" xlink:href="#cfytp-svg-40"></use></svg>');
-
-    $(searchButton).on('mouseover', function() {
-        if ($('.ytp-settings-menu').is(':visible')) return;
-        if ($('.ytp-search-menu').is(':visible')) return;
-
-        var tooltip = $('.ytp-tooltip');
-
-        $(tooltip).css({
-            'display': 'block',
-            'max-width': 'none',
-            'opacity': '1',
-            'text-align': 'center'
-        });
-
-        $('.ytp-tooltip-text').text('Search transcript');
-        $('.ytp-tooltip-text').css({
-            'display': 'block',
-            'whitespace': 'nowrap'
-        });
-
-        if ($(tooltip).hasClass('ytp-preview')) {
-            var originalTop = $(tooltip).position().top;
-            var bgHeight = $('.ytp-tooltip-bg').outerHeight();
-            var newTop = originalTop + bgHeight + 8;
-
-            $(tooltip).css('top', newTop + 'px');
-            $(tooltip).removeClass('ytp-preview');
-            $('.ytp-tooltip-bg').css('background', '');
-        }
-
-        var controlsLeft = $('.ytp-chrome-bottom').position().left;
-        var searchBtnLeft = $('.ytp-search-button').position().left;
-        var searchBtnMidpt = $('.ytp-search-button').outerWidth() / 2;
-        var tooltipMidpt = $('.ytp-tooltip').outerWidth() / 2;
-        var newLeft = controlsLeft + searchBtnLeft + searchBtnMidpt - tooltipMidpt;
-
-        $(tooltip).css('left', newLeft + 'px');
-
-        setTimeout(function() {
-            $(tooltip).css('display', 'block');
-        }, 100);
-    });
-
-    $(searchButton).on('mouseleave', function() {
-        if ($('.ytp-tooltip').length > 0) {
-            $('.ytp-tooltip').css('display', 'none');
-        }
-    });
-
-    $(searchButton).on('click', function(e) {
-        if (!$('.ytp-search-menu').is(':visible')) {
-            showSearchMenu();
-            $('.ytp-tooltip').hide();
-        } else {
-            hideSearchMenu();
-            $('.ytp-search-button').trigger('mouseover');
-        }
-    });
-
-    $('.ytp-right-controls').prepend(searchButton);
-}
-
-/**
- * Updates the search results and the width of the wrapper for the input field
- * in the search menu. For some reason, 'width: auto' wasn't working so this is
- * a hack to fix it.
- */
-var updateSearchLabel = function(curr, total) {
-    $('.ytp-search-results').text(curr + ' of ' + total);
-
-    var searchMenuWidth = $('.ytp-search-menu').width();
-    var searchRightWidth = $('.ytp-search-right-wrapper').width();
-    var newWidth = searchMenuWidth - searchRightWidth;
-
-    $('.ytp-search-left-wrapper').css('width', newWidth + 'px');
+function playSearchResult() {
+  updateSearchLabel(searchResult + 1, results.length);
+  $(selectors.VIDEO).get(0).currentTime = results[searchResult];
+  $(selectors.VIDEO).get(0).play();
 }
 
 /**
  * Formats the time to YouTube's standards given the amount of seconds.
+ * 
+ * 599 = 9:59
+ * 3599 = 59:59
+ * 35999 = 9:59:59
+ * 360000 = 10:00:00
  */
-var formatTime = function(seconds) {
-    hours = Math.floor(seconds / 3600);
-    minutes = Math.floor(seconds / 60);
-    minutes = minutes % 60;
-    seconds = Math.floor(seconds % 60);
-    seconds = (seconds >= 10) ? seconds : "0" + seconds;
-
-    output = "";
-    if (hours > 0) {
-    	output += hours + ":";
-        if (minutes < 10) {
-      	    output += "0" + minutes;
-        } else {
-      	    output += minutes;
-        }
-    } else {
-    	output += minutes;
-    }
-    output += ":" + seconds;
-
-    return output;
+function formatTime(seconds) {
+  if (seconds < 60 * 10) {
+    return new Date(seconds * 1000).toISOString().substr(15, 4);
+  } else if (seconds < 60 * 60) {
+    return new Date(seconds * 1000).toISOString().substr(14, 5);
+  } else if (seconds < 10 * 60 * 60) {
+    return new Date(seconds * 1000).toISOString().substr(12, 7);
+  } else {
+    return new Date(seconds * 1000).toISOString().substr(11, 8);
+  }
 }
 
 function openTranscript() {
-    $("ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-searchable-transcript'")
-        .attr('visibility', 'ENGAGEMENT_PANEL_VISIBILITY_EXPANDED');
-    $("ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-searchable-transcript'")
-        .css({ position: 'absolute', visibility: 'hidden' });
+  $(selectors.TRANSCRIPT).attr('visibility', 'ENGAGEMENT_PANEL_VISIBILITY_EXPANDED');
+  $(selectors.TRANSCRIPT).css({ position: 'absolute', visibility: 'hidden' });
 }
 
 function closeTranscript() {
-    $("ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-searchable-transcript'")
-        .attr('visibility', 'ENGAGEMENT_PANEL_VISIBILITY_HIDDEN');
-    $("ytd-engagement-panel-section-list-renderer[target-id='engagement-panel-searchable-transcript'")
-        .css({ position: 'relative', visibility: 'inherit' });
+  $(selectors.TRANSCRIPT).attr('visibility', 'ENGAGEMENT_PANEL_VISIBILITY_HIDDEN');
+  $(selectors.TRANSCRIPT).css({ position: 'relative', visibility: 'inherit' });
 }
 
 function main() {
-    flag = 0;
+  // reset everything
+  transcript = [];
+  results = [];
+  searchQuery = '';
+  searchResult = -1;
+  clearInterval(updateTimeInterval);
 
-    $('video').on('loadedmetadata', function() {
-        (flag === 0) ? flag = 1 : flag = 2;
+  $(selectors.SEARCH_MENU).remove();
 
-        if (flag === 1) {
-            if ($('.ytp-search-menu').length) {
-                $('.ytp-search-menu').remove();
-            }
-            if ($('.ytp-search-button').length) {
-                $('.ytp-search-button').remove();
-            }
-            if ($('.ytp-subtitles-button').is(':visible')) {
-                var loadTranscript = setInterval(function() {
-                    if ($('ytd-transcript-segment-renderer').length) {
-                        clearInterval(loadTranscript);
-                        parseTranscript($('ytd-transcript-segment-list-renderer').html());
-                        closeTranscript();
-                        if (!$('.ytp-search-button').length) {
-                            insertSearchButton();
-                        }
-                        if (!$('.ytp-search-menu').length) {
-                            insertSearchMenu();
-                        }
-                        currResult = -1;
-                        currQuery = '';
-                        clearInterval(updateTimeInterval);
-                    } else {
-                        openTranscript();
-                    }
-                }, 100);
-            }
+  $(selectors.VIDEO).on('loadedmetadata', () => {
+    if ($(selectors.SUBTITLES_BUTTON).is(':visible')) {
+      const loadTranscript = setInterval(() => {
+        if ($(selectors.TRANSCRIPT_ITEM).length) {
+          clearInterval(loadTranscript);
+          parseTranscript($(selectors.TRANSCRIPT_LIST).html());
+          closeTranscript();
+          if (!$(selectors.SEARCH_BUTTON).length) {
+            insertSearchButton();
+          }
+          if (!$(selectors.SEARCH_MENU).length) {
+            insertSearchMenu();
+          }
+        } else {
+          openTranscript();
         }
-    });
+      }, 100);
+    } else {
+      $(selectors.SEARCH_BUTTON).remove();
+      $(selectors.SEARCH_MENU).remove();
+    }
+  });
 }
 
-
+// run on load and when history changes
+// youtube uses the history API when changing videos
 window.onload = main;
 chrome.runtime.onMessage.addListener(main);

@@ -1,6 +1,6 @@
-//Listen for when a Tab changes state
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-    if (changeInfo && changeInfo.status == "complete") {
-        chrome.tabs.sendMessage(tabId, {data: tab});
+// listen for when a tab changes
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo && changeInfo.status == 'complete') {
+        chrome.tabs.sendMessage(tabId, { data: tab });
     }
 });
