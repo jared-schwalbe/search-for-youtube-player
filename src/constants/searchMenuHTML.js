@@ -25,19 +25,19 @@ const searchMenuHTML = `
     }
     .ytp-search-results {
       font-size: 13px;
-      margin-top: 7px;
-      margin-left: 12px;
-      margin-right: 12px;
+      margin-top: 6px;
+      margin-left: 15px;
+      margin-right: 15px;
     }
     .ytp-search-prev-btn {
-      margin-top: 7px;
-      margin-right: 10px;
+      margin-top: 6px;
+      margin-right: 8px;
       border: none;
       outline: none;
       background: none;
     }
     .ytp-search-next-btn {
-      margin-top: 7px;
+      margin-top: 6px;
       border: none;
       outline: none;
       background: none;
@@ -50,7 +50,7 @@ const searchMenuHTML = `
       clip-path: inset(9px 11px 9px 11px);
     }
     .ytp-search-menu--fs {
-      width: 340px;
+      width: 380px;
       height: 40px;
       padding: 10px 18px 10px 18px;
     }
@@ -60,16 +60,16 @@ const searchMenuHTML = `
     }
     .ytp-search-results--fs {
       font-size: 20px;
-      margin-top: 7px;
-      margin-left: 12px;
-      margin-right: 12px;
+      margin-top: 6px;
+      margin-left: 15px;
+      margin-right: 15px;
     }
     .ytp-search-prev-btn--fs {
-      margin-top: 12px;
-      margin-right: 10px;
+      margin-top: 10px;
+      margin-right: 6px;
     }
     .ytp-search-next-btn--fs {
-      margin-top: 12px;
+      margin-top: 10px;
     }
     .ytp-search-next-btn--fs img,
     .ytp-search-prev-btn--fs img {

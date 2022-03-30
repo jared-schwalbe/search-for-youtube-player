@@ -225,6 +225,8 @@ function insertSearchButton() {
   $(searchButton).html(searchButtonHTML);
 
   $(searchButton).on('mouseover', () => {
+    console.log('mouseover');
+
     if ($(selectors.SETTINGS_MENU).is(':visible') || $(selectors.SEARCH_MENU).is(':visible')) {
       return;
     }
@@ -283,7 +285,6 @@ function insertSearchButton() {
       $(selectors.TOOLTIP).hide();
     } else {
       hideSearchMenu();
-      $(selectors.SEARCH_BUTTON).trigger('mouseover');
     }
   });
 
