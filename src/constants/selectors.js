@@ -14,6 +14,7 @@ const selectors = {
   SEARCH_RIGHT_WRAPPER: '.ytp-search-right-wrapper',
   SETTINGS_MENU: '.ytp-settings-menu',
   SUBTITLES_BUTTON: '.ytp-subtitles-button',
+  SUBTITLES_ICON: '.ytp-subtitles-button-icon',
   TIME_CURRENT: '.ytp-time-current',
   TOOLTIP: '.ytp-tooltip',
   TOOLTIP_BG: '.ytp-tooltip-bg',

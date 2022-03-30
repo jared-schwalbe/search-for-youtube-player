@@ -128,6 +128,14 @@ function insertSearchMenu() {
     }
   });
 
+  if ($(selectors.VIDEO_PLAYER).hasClass(classes.FULLSCREEN)) {
+    $(selectors.SEARCH_MENU).addClass(classes.SEARCH_MENU_FULLSCREEN);
+    $(selectors.SEARCH_LEFT_WRAPPER).addClass(classes.SEARCH_LEFT_WRAPPER_FULLSCREEN);
+    $(selectors.SEARCH_RESULTS).addClass(classes.SEARCH_RESULTS_FULLSCREEN);
+    $(selectors.PREV_BUTTON).addClass(classes.PREV_BUTTON_FULLSCREEN);
+    $(selectors.NEXT_BUTTON).addClass(classes.NEXT_BUTTON_FULLSCREEN);
+  }
+
   // add/remove fullscreen styling
   $(document).on('fullscreenchange', () => {
     if (document.webkitIsFullScreen) {
@@ -337,8 +345,14 @@ function closeTranscript() {
   $(selectors.TRANSCRIPT).css({ position: 'relative', visibility: 'inherit' });
 }
 
+function videoHasCaptions() {
+  const subtitlesBtnVisible = $(selectors.SUBTITLES_BUTTON).is(':visible');
+  const subtitlesBtnEnabled = $(selectors.SUBTITLES_ICON).attr('fill-opacity') === '1';
+  return subtitlesBtnVisible && subtitlesBtnEnabled;
+}
+
 function run() {
-  if ($(selectors.SUBTITLES_BUTTON).is(':visible')) {
+  if (videoHasCaptions()) {
     const loadTranscript = setInterval(() => {
       if ($(selectors.TRANSCRIPT_ITEM).length) {
         clearInterval(loadTranscript);
@@ -368,7 +382,7 @@ function main() {
   searchResult = -1;
   clearInterval(updateTimeInterval);
 
-  // remove added the search elements
+  // remove the search elements
   $(selectors.SEARCH_BUTTON).remove();
   $(selectors.SEARCH_MENU).remove();
 
