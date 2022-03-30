@@ -60,7 +60,7 @@ function executeSearch(direction) {
   if (direction === 'next') {
     searchResult = 0;
     for (i = 0; i < results.length; i++) {
-      if (results[i] >= currentTime) {
+      if (results[i] > currentTime) {
         searchResult = i;
         break;
       }
@@ -68,7 +68,7 @@ function executeSearch(direction) {
   } else {
     searchResult = results.length - 1;
     for (i = results.length - 1; i >= 0; i--) {
-      if (results[i] <= currentTime) {
+      if (results[i] < currentTime) {
         searchResult = i;
         break;
       }
