@@ -312,7 +312,22 @@ function updateSearchLabel(current, total) {
  * with the "main world" and access the video player's seekTo API.
  */
 function seekToSearchResult(videoPlayerSelector, seconds) {
-  document.querySelector(videoPlayerSelector).seekTo(seconds, true);
+  const videoPlayer = document.querySelector(videoPlayerSelector);
+
+  videoPlayer.seekTo(seconds, true);
+
+  const event = new MouseEvent('mousemove', {
+    view: window,
+    bubbles: true,
+    cancelable: true,
+    clientX: videoPlayer.getBoundingClientRect().left + 10,
+    clientY: videoPlayer.getBoundingClientRect().top + 10,
+  });
+
+  setTimeout(() => {
+    // fake a mouseevent on the player to update the progress bar
+    videoPlayer.dispatchEvent(event);
+  }, 100);
 }
 
 function updateSearchAndSeek() {
