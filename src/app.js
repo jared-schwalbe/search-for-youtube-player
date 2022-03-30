@@ -2,10 +2,9 @@ let transcript = [];      // parsed transcript
 let results = [];         // results from the current query
 let searchQuery = '';     // current query in the search field
 let searchResult = -1;    // current index in the results array
-let updateTimeInterval;   // interval function to update the progress bar
 
-function parseTranscript(transcriptHTML) {
-  transcript = $(transcriptHTML).find(selectors.TRANSCRIPT_ITEM).map((i, item) => {
+function parseTranscript() {
+  transcript = $(selectors.TRANSCRIPT_ITEM).map((i, item) => {
     const text = $(item).find(selectors.TRANSCRIPT_TEXT)
       .text()
       .toLowerCase()
@@ -76,7 +75,7 @@ function executeSearch(direction) {
     }
   }
 
-  playSearchResult();
+  updateSearchAndSeek();
 }
 
 // Injects the search menu after the settings menu. Then sets up the listeners for its children.
@@ -103,7 +102,7 @@ function insertSearchMenu() {
       } else {
         searchResult++;
       }
-      playSearchResult();
+      updateSearchAndSeek();
     }
   });
 
@@ -116,7 +115,7 @@ function insertSearchMenu() {
       } else {
         searchResult--;
       }
-      playSearchResult();
+      updateSearchAndSeek();
     }
   });
 
@@ -186,12 +185,6 @@ function showSearchMenu() {
   $(selectors.GRADIANT_BOTTOM).css('opacity', '1');
   $(selectors.TOOLTIP).css('opacity', '0');
 
-  updateTimeInterval = setInterval(() => {
-    const { currentTime, duration } = $(selectors.VIDEO).get(0);
-    $(selectors.TIME_CURRENT).text(formatTime(currentTime));
-    $(selectors.PLAY_PROGRESS).css('transform', `scaleX(${currentTime / duration})`);
-  }, 100);
-
   setTimeout(() => {
     $(document).on('click', '*', clickOutsideSearchMenu);
   }, 100);
@@ -220,7 +213,6 @@ function hideSearchMenu() {
   $(selectors.GRADIANT_BOTTOM).css('opacity', '')
   $(selectors.TOOLTIP).css('opacity', '');
 
-  clearInterval(updateTimeInterval);
   $(document).unbind('click', clickOutsideSearchMenu);
   $(document).unbind('keyup', escapeSearchMenu);
 }
@@ -233,8 +225,6 @@ function insertSearchButton() {
   $(searchButton).html(searchButtonHTML);
 
   $(searchButton).on('mouseover', () => {
-    console.log('mouseover');
-
     if ($(selectors.SETTINGS_MENU).is(':visible') || $(selectors.SEARCH_MENU).is(':visible')) {
       return;
     }
@@ -309,30 +299,26 @@ function updateSearchLabel(current, total) {
   $(selectors.SEARCH_LEFT_WRAPPER).css('width', `${newWidth}px`);
 }
 
-function playSearchResult() {
-  updateSearchLabel(searchResult + 1, results.length);
-  $(selectors.VIDEO).get(0).currentTime = results[searchResult];
-  $(selectors.VIDEO).get(0).play();
+/**
+ * Content scripts are executed in an "isolated world" environment.
+ * So we need to inject this function into the DOM so it can interact
+ * with the "main world" and access the video player's seekTo API.
+ */
+function seekToSearchResult(videoPlayerSelector, seconds) {
+  document.querySelector(videoPlayerSelector).seekTo(seconds, true);
 }
 
-/**
- * Formats the time to YouTube's standards given the amount of seconds.
- * 
- * 599 = 9:59
- * 3599 = 59:59
- * 35999 = 9:59:59
- * 360000 = 10:00:00
- */
-function formatTime(seconds) {
-  if (seconds < 60 * 10) {
-    return new Date(seconds * 1000).toISOString().substr(15, 4);
-  } else if (seconds < 60 * 60) {
-    return new Date(seconds * 1000).toISOString().substr(14, 5);
-  } else if (seconds < 10 * 60 * 60) {
-    return new Date(seconds * 1000).toISOString().substr(12, 7);
-  } else {
-    return new Date(seconds * 1000).toISOString().substr(11, 8);
-  }
+function updateSearchAndSeek() {
+  updateSearchLabel(searchResult + 1, results.length);
+
+  const videoPlayerSelector = selectors.VIDEO_PLAYER;
+  const seconds = results[searchResult];
+
+  // run our custom event to seek to the search result
+  const injection = `(${seekToSearchResult})('${videoPlayerSelector}',${seconds})`;
+  document.documentElement.setAttribute('onreset', injection);
+  document.documentElement.dispatchEvent(new CustomEvent('reset'));
+  document.documentElement.removeAttribute('onreset');
 }
 
 function openTranscript() {
@@ -356,7 +342,7 @@ function run() {
     const loadTranscript = setInterval(() => {
       if ($(selectors.TRANSCRIPT_ITEM).length) {
         clearInterval(loadTranscript);
-        parseTranscript($(selectors.TRANSCRIPT_LIST).html());
+        parseTranscript();
         closeTranscript();
         if (!$(selectors.SEARCH_BUTTON).length) {
           insertSearchButton();
@@ -375,12 +361,11 @@ function run() {
 }
 
 function main() {
-  // reset everything
+  // reset global variables
   transcript = [];
   results = [];
   searchQuery = '';
   searchResult = -1;
-  clearInterval(updateTimeInterval);
 
   // remove the search elements
   $(selectors.SEARCH_BUTTON).remove();
