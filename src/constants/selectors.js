@@ -26,5 +26,6 @@ const selectors = {
   TRANSCRIPT_TEXT: '.segment-text',
   TRANSCRIPT_TIMESTAMP: '.segment-timestamp',
   VIDEO: 'video',
-  VIDEO_PLAYER: '#movie_player'
+  VIDEO_PLAYER: '.html5-video-player',
+  VIDEO_PLAYER_ID: '#movie_player'
 };

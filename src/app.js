@@ -1,7 +1,9 @@
-let transcript = [];      // parsed transcript
-let results = [];         // results from the current query
-let searchQuery = '';     // current query in the search field
-let searchResult = -1;    // current index in the results array
+let query = '';             // current query in the search field
+let transcript = [];        // parsed transcript with text and timestamps
+let results = [];           // search results from the current query
+let resultsIndex = -1;      // current index in the results array
+let searchMenuInterval;     // interval for showing video controls while menu is open
+let searchButtonInterval;   // interval for showing video controls while button is hovered
 
 function parseTranscript() {
   transcript = $(selectors.TRANSCRIPT_ITEM).map((i, item) => {
@@ -26,13 +28,35 @@ function parseTranscript() {
   });
 }
 
-function searchTranscript(query) {
+// easy way to keep the video controls shown in to fake a mouse move on the video player
+function showVideoControls() {
+  const videoPlayer = document.querySelector(selectors.VIDEO_PLAYER_ID);
+  const videoPlayerPosition = videoPlayer.getBoundingClientRect();
+
+  videoPlayer.dispatchEvent(new MouseEvent('mousemove', {
+    view: window,
+    bubbles: true,
+    cancelable: true,
+    clientX: videoPlayerPosition.left + Math.round(Math.random() * 100),
+    clientY: videoPlayerPosition.top + Math.round(Math.random() * 100),
+  }));
+}
+
+function hideVideoControls() {
+  const videoPlayer = document.querySelector(selectors.VIDEO_PLAYER_ID);
+
+  videoPlayer.dispatchEvent(new MouseEvent('mouseleave'));
+}
+
+function searchTranscript() {
   const transcriptText = transcript.map((i, item) => item.text).get();
   const fullTranscript = transcriptText.join(' ');
   const timestamps = [];
 
   for (i = 0; i < fullTranscript.length; i++) {
     if (fullTranscript.substring(i, i + query.length) === query) {
+      // to find the index in the transcript, join the array with the unique character '|'
+      // and then count the number of occurences
       const index = transcriptText.join('|').substring(0, i).split('|').length - 1;
       timestamps.push(transcript[index].timestamp);
     }
@@ -46,11 +70,11 @@ function getSearchInput() {
 }
 
 function executeSearch(direction) {
-  searchResult = -1;
-  searchQuery = getSearchInput();
-  results = searchTranscript(searchQuery);
+  resultsIndex = -1;
+  query = getSearchInput();
+  results = searchTranscript();
 
-  if (searchQuery === '' || !results.length) {
+  if (query === '' || !results.length) {
     updateSearchLabel(0, 0);
     return;
   }
@@ -58,18 +82,18 @@ function executeSearch(direction) {
   const currentTime = $(selectors.VIDEO).get(0).currentTime;
 
   if (direction === 'next') {
-    searchResult = 0;
+    resultsIndex = 0;
     for (i = 0; i < results.length; i++) {
       if (results[i] > currentTime) {
-        searchResult = i;
+        resultsIndex = i;
         break;
       }
     }
   } else {
-    searchResult = results.length - 1;
+    resultsIndex = results.length - 1;
     for (i = results.length - 1; i >= 0; i--) {
       if (results[i] < currentTime) {
-        searchResult = i;
+        resultsIndex = i;
         break;
       }
     }
@@ -85,8 +109,7 @@ function insertSearchMenu() {
   $(selectors.SEARCH_INPUT).on('keydown', e => {
     if (getSearchInput() === '') {
       updateSearchLabel(0, 0);
-    }
-    if (e.keyCode === 13) {
+    } else if (e.keyCode === 13) {
       e.preventDefault();
       executeSearch('next');
     }
@@ -94,47 +117,39 @@ function insertSearchMenu() {
   });
 
   $(selectors.NEXT_BUTTON).on('click', () => {
-    if (searchQuery !== getSearchInput() || searchResult === -1) {
+    if (query !== getSearchInput() || resultsIndex === -1) {
       executeSearch('next');
     } else {
-      if (searchResult === results.length - 1) {
-        searchResult = 0;
+      if (resultsIndex === results.length - 1) {
+        resultsIndex = 0;
       } else {
-        searchResult++;
+        resultsIndex++;
       }
       updateSearchAndSeek();
     }
   });
 
   $(selectors.PREV_BUTTON).on('click', () => {
-    if (searchQuery !== getSearchInput() || searchResult === -1) {
+    if (query !== getSearchInput() || resultsIndex === -1) {
       executeSearch('prev');
     } else {
-      if (searchResult === 0) {
-        searchResult = results.length - 1;
+      if (resultsIndex === 0) {
+        resultsIndex = results.length - 1;
       } else {
-        searchResult--;
+        resultsIndex--;
       }
       updateSearchAndSeek();
     }
   });
 
-  $(selectors.VIDEO_PLAYER).on('mouseleave', () => {
-    if ($(selectors.SEARCH_MENU).is(':visible')) {
-      $(selectors.CHROME_BOTTOM).css('display', 'block');
-      $(selectors.GRADIANT_BOTTOM).css('display', 'block');
-    }
-  });
-
-  // detect video player resizing
   new ResizeSensor($(selectors.VIDEO_PLAYER), () => {
     if ($(selectors.SEARCH_MENU).is(':visible')) {
+      // hide search menu when player resizes
       hideSearchMenu();
-      showSearchMenu();
     }
   });
 
-  if ($(selectors.VIDEO_PLAYER).hasClass(classes.FULLSCREEN)) {
+  if (document.webkitIsFullScreen) {
     $(selectors.SEARCH_MENU).addClass(classes.SEARCH_MENU_FULLSCREEN);
     $(selectors.SEARCH_LEFT_WRAPPER).addClass(classes.SEARCH_LEFT_WRAPPER_FULLSCREEN);
     $(selectors.SEARCH_RESULTS).addClass(classes.SEARCH_RESULTS_FULLSCREEN);
@@ -142,8 +157,10 @@ function insertSearchMenu() {
     $(selectors.NEXT_BUTTON).addClass(classes.NEXT_BUTTON_FULLSCREEN);
   }
 
-  // add/remove fullscreen styling
   $(document).on('fullscreenchange', () => {
+    // need the calculate and set the width again
+    updateSearchLabel(resultsIndex + 1, results.length);
+    // add/remove fullscreen styling 
     if (document.webkitIsFullScreen) {
       $(selectors.SEARCH_MENU).addClass(classes.SEARCH_MENU_FULLSCREEN);
       $(selectors.SEARCH_LEFT_WRAPPER).addClass(classes.SEARCH_LEFT_WRAPPER_FULLSCREEN);
@@ -177,7 +194,7 @@ function showSearchMenu() {
   $(selectors.SETTINGS_MENU).hide();
   $(selectors.SEARCH_MENU).show();
 
-  updateSearchLabel(searchResult + 1, results.length);
+  updateSearchLabel(resultsIndex + 1, results.length);
   $(selectors.SEARCH_INPUT).focus();
 
   if (
@@ -188,9 +205,10 @@ function showSearchMenu() {
     updateSearchLabel(0, 0);
   }
 
-  $(selectors.CHROME_BOTTOM).css('opacity', '1');
-  $(selectors.GRADIANT_BOTTOM).css('opacity', '1');
   $(selectors.TOOLTIP).css('opacity', '0');
+
+  // keep video controls visible while menu is shown
+  searchMenuInterval = setInterval(showVideoControls, 100);
 
   setTimeout(() => {
     $(document).on('click', '*', clickOutsideSearchMenu);
@@ -216,9 +234,15 @@ function clickOutsideSearchMenu(e) {
 function hideSearchMenu() {
   $(selectors.SEARCH_MENU).hide();
 
-  $(selectors.CHROME_BOTTOM).css('opacity', '');
-  $(selectors.GRADIANT_BOTTOM).css('opacity', '')
+  $(selectors.SEARCH_INPUT).val('');
   $(selectors.TOOLTIP).css('opacity', '');
+
+  query = '';
+  results = [];
+  resultsIndex = -1;
+
+  clearInterval(searchMenuInterval);
+  hideVideoControls();
 
   $(document).unbind('click', clickOutsideSearchMenu);
   $(document).unbind('keyup', escapeSearchMenu);
@@ -239,6 +263,9 @@ function insertSearchButton() {
     if (!$(selectors.TOOLTIP_TEXT_WRAPPER).parent().hasClass(classes.TOOLTIP)) {
       $(selectors.TOOLTIP_TEXT_WRAPPER).parent().addClass(classes.TOOLTIP);
     }
+
+    // keep video controls visible while menu is shown
+    searchButtonInterval = setInterval(showVideoControls, 100);
 
     $(selectors.TOOLTIP).css({
       'display': 'block',
@@ -281,6 +308,8 @@ function insertSearchButton() {
   $(searchButton).on('mouseleave', () => {
     if ($(selectors.TOOLTIP).length) {
       $(selectors.TOOLTIP).css('display', 'none');
+      clearInterval(searchButtonInterval);
+      hideVideoControls();
     }
   });
 
@@ -306,41 +335,28 @@ function updateSearchLabel(current, total) {
   $(selectors.SEARCH_LEFT_WRAPPER).css('width', `${newWidth}px`);
 }
 
-/**
- * Content scripts are executed in an "isolated world" environment.
- * So we need to inject this function into the DOM so it can interact
- * with the "main world" and access the video player's seekTo API.
- */
+// Content scripts are executed in an "isolated world" environment.
+// So we need to inject this function into the DOM so it can interact
+// with the "main world" and access the video player's seekTo API.
 function seekToSearchResult(videoPlayerSelector, seconds) {
-  const videoPlayer = document.querySelector(videoPlayerSelector);
+  document.querySelector(videoPlayerSelector).seekTo(seconds);
+}
 
-  videoPlayer.seekTo(seconds, true);
-
-  const event = new MouseEvent('mousemove', {
-    view: window,
-    bubbles: true,
-    cancelable: true,
-    clientX: videoPlayer.getBoundingClientRect().left + 10,
-    clientY: videoPlayer.getBoundingClientRect().top + 10,
+function addSeekEvent(seekFn, showControlsFn) {
+  document.addEventListener('seek', e => {
+    seekFn('#movie_player', e.detail.seconds);
+    showControlsFn();
   });
-
-  setTimeout(() => {
-    // fake a mouseevent on the player to update the progress bar
-    videoPlayer.dispatchEvent(event);
-  }, 100);
 }
 
 function updateSearchAndSeek() {
-  updateSearchLabel(searchResult + 1, results.length);
+  updateSearchLabel(resultsIndex + 1, results.length);
 
-  const videoPlayerSelector = selectors.VIDEO_PLAYER;
-  const seconds = results[searchResult];
-
-  // run our custom event to seek to the search result
-  const injection = `(${seekToSearchResult})('${videoPlayerSelector}',${seconds})`;
-  document.documentElement.setAttribute('onreset', injection);
-  document.documentElement.dispatchEvent(new CustomEvent('reset'));
-  document.documentElement.removeAttribute('onreset');
+  document.dispatchEvent(new CustomEvent('seek', {
+    detail: {
+      seconds: results[resultsIndex]
+    }
+  }));
 }
 
 function openTranscript() {
@@ -359,11 +375,11 @@ function videoHasCaptions() {
   return subtitlesBtnVisible && subtitlesBtnEnabled;
 }
 
-function run() {
+function addSearchControls() {
   if (videoHasCaptions()) {
-    const loadTranscript = setInterval(() => {
+    const transcriptInterval = setInterval(() => {
       if ($(selectors.TRANSCRIPT_ITEM).length) {
-        clearInterval(loadTranscript);
+        clearInterval(transcriptInterval);
         parseTranscript();
         closeTranscript();
         if (!$(selectors.SEARCH_BUTTON).length) {
@@ -382,25 +398,33 @@ function run() {
   }
 }
 
-function main() {
+function setup() {
   // reset global variables
+  query = '';
   transcript = [];
   results = [];
-  searchQuery = '';
-  searchResult = -1;
+  resultsIndex = -1;
+  clearInterval(searchMenuInterval);
+  clearInterval(searchButtonInterval);
 
-  // remove the search elements
+  // remove the html elements we added
   $(selectors.SEARCH_BUTTON).remove();
   $(selectors.SEARCH_MENU).remove();
 
-  // run now if the video is already playing or after it finishes loading
+  // begin now if the video is already playing or wait til after it finishes loading
   if ($(selectors.VIDEO).get(0).currentTime > 0) {
-    run();
+    addSearchControls();
   } else {
-    $(selectors.VIDEO).on('loadedmetadata', run);
+    $(selectors.VIDEO).on('loadedmetadata', addSearchControls);
   }
 }
 
-// run immediately (onload) and when youtube navigates to a new video
-main();
-window.addEventListener('yt-navigate-start', main, true);
+// inject our 'seek' custom event into the DOM
+// this allows it to interact with the seekTo API on the video player
+document.documentElement.setAttribute('onreset', `(${addSeekEvent})(${seekToSearchResult},${showVideoControls})`);
+document.documentElement.dispatchEvent(new CustomEvent('reset'));
+
+// run whenever youtube navigates to a new video
+// but also run it now (onload)
+window.addEventListener('yt-navigate-start', setup, true);
+setup();
