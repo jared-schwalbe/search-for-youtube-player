@@ -119,6 +119,13 @@ function insertSearchMenu() {
     }
   });
 
+  $(selectors.VIDEO_PLAYER).on('mouseleave', () => {
+    if ($(selectors.SEARCH_MENU).is(':visible')) {
+      $(selectors.CHROME_BOTTOM).css('display', 'block');
+      $(selectors.GRADIANT_BOTTOM).css('display', 'block');
+    }
+  });
+
   // detect video player resizing
   new ResizeSensor($(selectors.VIDEO_PLAYER), () => {
     if ($(selectors.SEARCH_MENU).is(':visible')) {
