@@ -20,12 +20,11 @@ const selectors = {
   TOOLTIP_BG: '.ytp-tooltip-bg',
   TOOLTIP_TEXT: '.ytp-tooltip-text',
   TOOLTIP_TEXT_WRAPPER: '.ytp-tooltip-text-wrapper',
-  TRANSCRIPT: 'ytd-engagement-panel-section-list-renderer[target-id=\'engagement-panel-searchable-transcript\'',
-  TRANSCRIPT_LIST: 'ytd-transcript-segment-list-renderer',
-  TRANSCRIPT_ITEM: 'ytd-transcript-segment-renderer',
-  TRANSCRIPT_TEXT: '.segment-text',
-  TRANSCRIPT_TIMESTAMP: '.segment-timestamp',
+  TRANSCRIPT: 'ytd-engagement-panel-section-list-renderer[target-id=\'engagement-panel-searchable-transcript\'],ytd-engagement-panel-section-list-renderer[target-id=\'engagement-panel-transcript\']',
+  TRANSCRIPT_LIST: 'ytd-transcript-segment-list-renderer,ytd-transcript-body-renderer',
+  TRANSCRIPT_ITEM: 'ytd-transcript-segment-renderer,.cue-group',
+  TRANSCRIPT_TEXT: '.segment-text,.cue',
+  TRANSCRIPT_TIMESTAMP: '.segment-timestamp,.cue-group-start-offset',
   VIDEO: 'video',
-  VIDEO_PLAYER: '.html5-video-player',
-  VIDEO_PLAYER_ID: '#movie_player'
+  VIDEO_PLAYER: '.html5-video-player'
 };

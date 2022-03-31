@@ -30,7 +30,7 @@ function parseTranscript() {
 
 // easy way to keep the video controls shown in to fake a mouse move on the video player
 function showVideoControls() {
-  const videoPlayer = document.querySelector(selectors.VIDEO_PLAYER_ID);
+  const videoPlayer = document.querySelector('#movie_player');
   const videoPlayerPosition = videoPlayer.getBoundingClientRect();
 
   videoPlayer.dispatchEvent(new MouseEvent('mousemove', {
@@ -43,7 +43,7 @@ function showVideoControls() {
 }
 
 function hideVideoControls() {
-  const videoPlayer = document.querySelector(selectors.VIDEO_PLAYER_ID);
+  const videoPlayer = document.querySelector('#movie_player');
 
   videoPlayer.dispatchEvent(new MouseEvent('mouseleave'));
 }
@@ -102,19 +102,23 @@ function executeSearch(direction) {
   updateSearchAndSeek();
 }
 
-// Injects the search menu after the settings menu. Then sets up the listeners for its children.
-function insertSearchMenu() {
-  $(selectors.SETTINGS_MENU).after(searchMenuHTML);
+// Injects the search menu after the settings menu then sets up the listeners
+async function insertSearchMenu() {
+  const html = await Promise.resolve($.get(chrome.runtime.getURL('src/html/searchMenu.html')));
+  $(selectors.SETTINGS_MENU).after(html);
 
+  // IMPORTANT! prevents shortcut keys
   $(selectors.SEARCH_INPUT).on('keydown', e => {
-    if (getSearchInput() === '') {
+    e.stopPropagation();
+  });
+
+  $(selectors.SEARCH_INPUT).on('keyup', e => {
+    if (e.currentTarget.value === '') {
       updateSearchLabel(0, 0);
     } else if (e.keyCode === 13) {
-      e.preventDefault();
       executeSearch('next');
     }
-    e.stopPropagation(); // IMPORTANT!! prevents shortcut keys
-  });
+  })
 
   $(selectors.NEXT_BUTTON).on('click', () => {
     if (query !== getSearchInput() || resultsIndex === -1) {
@@ -249,11 +253,14 @@ function hideSearchMenu() {
 }
 
 
-function insertSearchButton() {
+async function insertSearchButton() {
   const searchButton = document.createElement('button');
   $(searchButton).addClass(classes.BUTTON);
   $(searchButton).addClass(classes.SEARCH_BUTTON);
-  $(searchButton).html(searchButtonHTML);
+
+  // load html for the search button into the new DOM element
+  const html = await Promise.resolve($.get(chrome.runtime.getURL('src/html/searchButton.html')));
+  $(searchButton).html(html);
 
   $(searchButton).on('mouseover', () => {
     if ($(selectors.SETTINGS_MENU).is(':visible') || $(selectors.SEARCH_MENU).is(':visible')) {

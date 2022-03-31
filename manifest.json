@@ -18,10 +18,17 @@
         "src/lib/ElementQueries.js",
         "src/constants/classes.js",
         "src/constants/selectors.js",
-        "src/constants/searchButtonHTML.js",
-        "src/constants/searchMenuHTML.js",
         "src/app.js"
       ]
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/html/searchButton.html",
+        "src/html/searchMenu.html"
+      ],
+      "matches": [ "*://*.youtube.com/*"]
+    }    
   ]
 }
