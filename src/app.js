@@ -414,9 +414,10 @@ function setup() {
   clearInterval(searchMenuInterval);
   clearInterval(searchButtonInterval);
 
-  // remove the html elements we added
+  // remove the html elements and listeners we added
   $(selectors.SEARCH_BUTTON).remove();
   $(selectors.SEARCH_MENU).remove();
+  $(selectors.VIDEO).unbind('loadedmetadata', addSearchControls);
 
   // begin now if the video is already playing or wait til after it finishes loading
   if ($(selectors.VIDEO).get(0).currentTime > 0) {
@@ -426,7 +427,7 @@ function setup() {
   }
 }
 
-// inject our 'seek' custom event into the DOM
+// utilize the unused 'reset' event to inject our 'seek' custom event into the DOM
 // this allows it to interact with the seekTo API on the video player
 document.documentElement.setAttribute('onreset', `(${addSeekEvent})(${seekToSearchResult},${showVideoControls})`);
 document.documentElement.dispatchEvent(new CustomEvent('reset'));
