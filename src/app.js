@@ -294,11 +294,11 @@ async function insertSearchButton() {
     const controlsLeft = $(selectors.CHROME_BOTTOM).position().left;
     const searchBtnLeft = $(selectors.SEARCH_BUTTON).position().left;
     const searchBtnMidpoint = $(selectors.SEARCH_BUTTON).outerWidth() / 2;
-    const tooltipMidpoint = $(selectors.TOOLTIP).outerWidth() / 2;
+    const tooltipMidpoint = document.webkitIsFullScreen ? 89 : 59;
     const newLeft = controlsLeft + searchBtnLeft + searchBtnMidpoint - tooltipMidpoint;
-
+  
     const videoHeight = $(selectors.VIDEO_PLAYER).height();
-    const offset = $(selectors.VIDEO_PLAYER).hasClass(classes.FULLSCREEN) ? 94 : 87;
+    const offset = document.webkitIsFullScreen ? 94 : 87;
     const newTop = videoHeight - offset;
 
     $(selectors.TOOLTIP).css({
