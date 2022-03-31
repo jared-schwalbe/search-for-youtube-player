@@ -1,6 +1,7 @@
 {
   "name": "Search for YouTube Player",
   "description": "Add search functionality to the YouTube video player for videos with closed captions",
+  "author": "Jared Schwalbe",
   "version": "2.0.0",
   "manifest_version": 3,
   "icons": {
@@ -11,7 +12,7 @@
   "content_scripts": [
     {
       "run_at": "document_end",
-      "matches": [ "*://*.youtube.com/*"],
+      "matches": ["*://*.youtube.com/*"],
       "js": [
         "src/lib/jquery-3.1.1.min.js",
         "src/lib/ResizeSensor.js",
@@ -24,11 +25,11 @@
   ],
   "web_accessible_resources": [
     {
+      "matches": ["*://*.youtube.com/*"],
       "resources": [
         "src/html/searchButton.html",
         "src/html/searchMenu.html"
-      ],
-      "matches": [ "*://*.youtube.com/*"]
-    }    
+      ]
+    }
   ]
 }

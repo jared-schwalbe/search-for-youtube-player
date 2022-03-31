@@ -252,7 +252,6 @@ function hideSearchMenu() {
   $(document).unbind('keyup', escapeSearchMenu);
 }
 
-
 async function insertSearchButton() {
   const searchButton = document.createElement('button');
   $(searchButton).addClass(classes.BUTTON);
@@ -368,12 +367,22 @@ function updateSearchAndSeek() {
 
 function openTranscript() {
   $(selectors.TRANSCRIPT).attr('visibility', 'ENGAGEMENT_PANEL_VISIBILITY_EXPANDED');
-  $(selectors.TRANSCRIPT).css({ position: 'absolute', visibility: 'hidden' });
+  $(selectors.TRANSCRIPT).css({
+    position: 'fixed',
+    left: '0px',
+    top: '0px',
+    visibility: 'hidden',
+  });
 }
 
 function closeTranscript() {
   $(selectors.TRANSCRIPT).attr('visibility', 'ENGAGEMENT_PANEL_VISIBILITY_HIDDEN');
-  $(selectors.TRANSCRIPT).css({ position: 'relative', visibility: 'inherit' });
+  $(selectors.TRANSCRIPT).css({
+    position: 'relative',
+    left: '',
+    top: '',
+    visibility: 'inherit',
+  });
 }
 
 function videoHasCaptions() {
@@ -420,10 +429,12 @@ function setup() {
   $(selectors.VIDEO).unbind('loadedmetadata', addSearchControls);
 
   // begin now if the video is already playing or wait til after it finishes loading
-  if ($(selectors.VIDEO).get(0).currentTime > 0) {
-    addSearchControls();
-  } else {
-    $(selectors.VIDEO).on('loadedmetadata', addSearchControls);
+  if ($(selectors.VIDEO) && $(selectors.VIDEO).get(0)) {
+    if ($(selectors.VIDEO).get(0).currentTime > 0) {
+      addSearchControls();
+    } else {
+      $(selectors.VIDEO).on('loadedmetadata', addSearchControls);
+    }
   }
 }
 

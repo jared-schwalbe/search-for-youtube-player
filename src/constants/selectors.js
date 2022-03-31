@@ -22,6 +22,7 @@ const selectors = {
   TOOLTIP_TEXT_WRAPPER: '.ytp-tooltip-text-wrapper',
   TRANSCRIPT: 'ytd-engagement-panel-section-list-renderer[target-id=\'engagement-panel-searchable-transcript\'],ytd-engagement-panel-section-list-renderer[target-id=\'engagement-panel-transcript\']',
   TRANSCRIPT_LIST: 'ytd-transcript-segment-list-renderer,ytd-transcript-body-renderer',
+  TRANSCRIPT_RENDERER: 'ytd-transcript-renderer',
   TRANSCRIPT_ITEM: 'ytd-transcript-segment-renderer,.cue-group',
   TRANSCRIPT_TEXT: '.segment-text,.cue',
   TRANSCRIPT_TIMESTAMP: '.segment-timestamp,.cue-group-start-offset',
