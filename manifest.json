@@ -15,8 +15,8 @@
       "matches": ["*://*.youtube.com/*"],
       "js": [
         "src/lib/jquery-3.6.0.min.js",
-        "src/lib/resizeSensor.js",
-        "src/lib/elementQueries.js",
+        "src/lib/resize-sensor.min.js",
+        "src/lib/element-queries.min.js",
         "src/constants/classes.js",
         "src/constants/selectors.js",
         "src/app.js"
