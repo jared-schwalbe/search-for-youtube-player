@@ -146,9 +146,9 @@ async function insertSearchMenu() {
     }
   });
 
+  // hide search menu when player resizes
   new ResizeSensor($(selectors.VIDEO_PLAYER), () => {
     if ($(selectors.SEARCH_MENU).is(':visible')) {
-      // hide search menu when player resizes
       hideSearchMenu();
     }
   });
@@ -161,10 +161,9 @@ async function insertSearchMenu() {
     $(selectors.NEXT_BUTTON).addClass(classes.NEXT_BUTTON_FULLSCREEN);
   }
 
+  // add/remove fullscreen styling and refresh the search label width while doing so
   $(document).on('fullscreenchange', () => {
-    // need the calculate and set the width again
     updateSearchLabel(resultsIndex + 1, results.length);
-    // add/remove fullscreen styling 
     if (document.webkitIsFullScreen) {
       $(selectors.SEARCH_MENU).addClass(classes.SEARCH_MENU_FULLSCREEN);
       $(selectors.SEARCH_LEFT_WRAPPER).addClass(classes.SEARCH_LEFT_WRAPPER_FULLSCREEN);
