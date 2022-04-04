@@ -102,6 +102,24 @@ function executeSearch(direction) {
   updateSearchAndSeek();
 }
 
+function goToNext() {
+  if (resultsIndex === results.length - 1) {
+    resultsIndex = 0;
+  } else {
+    resultsIndex++;
+  }
+  updateSearchAndSeek();
+}
+
+function goToPrev() {
+  if (resultsIndex === 0) {
+    resultsIndex = results.length - 1;
+  } else {
+    resultsIndex--;
+  }
+  updateSearchAndSeek();
+}
+
 // Injects the search menu after the settings menu then sets up the listeners
 async function insertSearchMenu() {
   const html = await Promise.resolve($.get(chrome.runtime.getURL('src/html/searchMenu.html')));
@@ -110,6 +128,9 @@ async function insertSearchMenu() {
   // IMPORTANT! prevents shortcut keys
   $(selectors.SEARCH_INPUT).on('keydown', e => {
     e.stopPropagation();
+    if (e.keyCode === 37 || e.keyCode === 39) {
+      e.preventDefault();
+    }
   });
 
   $(selectors.SEARCH_INPUT).on('keyup', e => {
@@ -117,6 +138,10 @@ async function insertSearchMenu() {
       updateSearchLabel(0, 0);
     } else if (e.keyCode === 13) {
       executeSearch('next');
+    } else if (e.keyCode === 39 && resultsIndex >= 0) {
+      goToNext();
+    } else if (e.keyCode === 37 && resultsIndex >= 0) {
+      goToPrev();
     }
   })
 
@@ -124,12 +149,7 @@ async function insertSearchMenu() {
     if (query !== getSearchInput() || resultsIndex === -1) {
       executeSearch('next');
     } else {
-      if (resultsIndex === results.length - 1) {
-        resultsIndex = 0;
-      } else {
-        resultsIndex++;
-      }
-      updateSearchAndSeek();
+      goToNext();
     }
   });
 
@@ -137,12 +157,7 @@ async function insertSearchMenu() {
     if (query !== getSearchInput() || resultsIndex === -1) {
       executeSearch('prev');
     } else {
-      if (resultsIndex === 0) {
-        resultsIndex = results.length - 1;
-      } else {
-        resultsIndex--;
-      }
-      updateSearchAndSeek();
+      goToPrev();
     }
   });
 
