@@ -17,8 +17,14 @@
         "src/lib/jquery-3.6.0.min.js",
         "src/lib/resize-sensor.min.js",
         "src/lib/element-queries.min.js",
-        "src/constants/classes.js",
-        "src/constants/selectors.js",
+        "src/modules/index.js",
+        "src/modules/classes.js",
+        "src/modules/selectors.js",
+        "src/modules/transcript.js",
+        "src/modules/video.js",
+        "src/modules/menu.js",
+        "src/modules/button.js",
+        "src/modules/search.js",
         "src/app.js"
       ]
     }
