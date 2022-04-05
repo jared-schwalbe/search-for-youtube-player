@@ -1,9 +1,9 @@
 {
   "scripts": {
-    "lint": "eslint src",
     "build": "rollup -c",
     "start": "rollup -c -w",
-    "prepare": "husky install"
+    "lint": "eslint src",
+    "preinstall": "npx npm-force-resolutions"
   },
   "dependencies": {
     "jquery": "^3.6.0",
@@ -16,7 +16,12 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.25.4",
     "husky": "^7.0.4",
+    "npm-force-resolutions": "^0.0.10",
     "rollup": "^2.70.1",
     "rollup-plugin-chrome-extension": "^3.6.7"
+  },
+  "resolutions": {
+    "json-ptr": "3.1.0",
+    "nth-check": "2.0.1"
   }
 }
