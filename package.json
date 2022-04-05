@@ -2,7 +2,8 @@
   "scripts": {
     "lint": "eslint src",
     "build": "rollup -c",
-    "start": "rollup -c -w"
+    "start": "rollup -c -w",
+    "prepare": "husky install"
   },
   "dependencies": {
     "jquery": "^3.6.0",
@@ -14,6 +15,7 @@
     "eslint": "^8.12.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.25.4",
+    "husky": "^7.0.4",
     "rollup": "^2.70.1",
     "rollup-plugin-chrome-extension": "^3.6.7"
   }
