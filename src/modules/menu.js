@@ -222,7 +222,8 @@ export async function insert() {
   });
 
   // hide search menu when player resizes
-  ResizeSensor($(selectors.VIDEO_PLAYER), () => {
+  // eslint-disable-next-line no-new
+  new ResizeSensor($(selectors.VIDEO_PLAYER), () => {
     if ($(selectors.SEARCH_MENU).is(':visible')) {
       hide();
     }
