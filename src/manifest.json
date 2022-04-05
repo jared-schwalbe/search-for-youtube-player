@@ -13,28 +13,15 @@
     {
       "run_at": "document_end",
       "matches": ["*://*.youtube.com/*"],
-      "js": [
-        "src/lib/jquery-3.6.0.min.js",
-        "src/lib/resize-sensor.min.js",
-        "src/lib/element-queries.min.js",
-        "src/modules/index.js",
-        "src/modules/classes.js",
-        "src/modules/selectors.js",
-        "src/modules/transcript.js",
-        "src/modules/video.js",
-        "src/modules/menu.js",
-        "src/modules/button.js",
-        "src/modules/search.js",
-        "src/app.js"
-      ]
+      "js": ["app.js"]
     }
   ],
   "web_accessible_resources": [
     {
       "matches": ["*://*.youtube.com/*"],
       "resources": [
-        "src/html/searchButton.html",
-        "src/html/searchMenu.html"
+        "html/searchButton.html",
+        "html/searchMenu.html"
       ]
     }
   ]

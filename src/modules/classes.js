@@ -1,4 +1,4 @@
-modules.classes = {
+export default {
   BUTTON: 'ytp-button',
   FULLSCREEN: 'ytp-fullscreen',
   NEXT_BUTTON_FULLSCREEN: 'ytp-search-next-btn--fs',

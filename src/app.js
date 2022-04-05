@@ -1,22 +1,38 @@
-const { button, menu, search, transcript, video } = modules;
+import $ from 'jquery';
 
-function getSearchInput() {
-  return $(selectors.SEARCH_INPUT).val().toLowerCase().trim();
-}
+import selectors from './modules/selectors.js';
+import * as button from './modules/button.js';
+import * as menu from './modules/menu.js';
+import * as video from './modules/video.js';
+import * as transcript from './modules/transcript.js';
 
-// Content scripts are executed in an "isolated world" environment.
-// So we need to inject this function into the DOM so it can interact
+const initialState = {
+  query: '',
+  transcript: [],
+  results: [],
+  index: -1,
+  showControlsInterval: {
+    menu: null,
+    button: null,
+  },
+};
+
+window.$ = window.jQuery = $;
+window.state = Object.assign({}, initialState);
+
+// content scripts are executed in an "isolated world" environment.
+// so we need to inject this listener into the DOM so we can interact
 // with the "main world" and access the video player's seekTo API.
-function seekToSearchResult(videoPlayerSelector, seconds) {
-  document.querySelector(videoPlayerSelector).seekTo(seconds);
-}
-
-function addSeekEvent(seekFn, showControlsFn) {
+function addSeekEvent(showControls) {
   document.addEventListener('seek', e => {
-    seekFn('#movie_player', e.detail.seconds);
-    showControlsFn();
+    document.querySelector('#movie_player').seekTo(e.detail.seconds);
+    showControls();
   });
 }
+
+// utilize the unused 'reset' event to inject our 'seek' custom event into the DOM
+document.documentElement.setAttribute('onreset', `(${addSeekEvent})(${video.showControls})`);
+document.documentElement.dispatchEvent(new CustomEvent('reset'));
 
 function addSearchControls() {
   if (video.hasCaptions()) {
@@ -38,20 +54,15 @@ function addSearchControls() {
 }
 
 function setup() {
-  // reset application state
-  search.query = '';
-  search.index = -1;
-  search.results = null;
-  transcript.captions = [];
-  clearInterval(menu.showControlsInterval);
-  clearInterval(button.showControlsInterval);
+  clearInterval(state.showControlsInterval.menu);
+  clearInterval(state.showControlsInterval.button);
+  Object.assign(state, initialState);
 
   button.remove();
   menu.remove();
 
   $(selectors.VIDEO).unbind('loadedmetadata', addSearchControls);
 
-  // begin now if the video is already playing or wait until after it finishes loading
   if (video.isOnPage()) {
     if (video.getCurrentTime() > 0) {
       addSearchControls();
@@ -61,13 +72,5 @@ function setup() {
   }
 }
 
-// utilize the unused 'reset' event to inject our 'seek' custom event into the DOM
-// this allows it to interact with the seekTo API on the video player element
-document.documentElement.setAttribute('onreset', `(${addSeekEvent})(${seekToSearchResult},${video.showControls})`);
-document.documentElement.dispatchEvent(new CustomEvent('reset'));
-
-// run immediately (onload)
 setup();
-
-// and run whenever youtube navigates to a new video
 window.addEventListener('yt-navigate-start', setup, true);

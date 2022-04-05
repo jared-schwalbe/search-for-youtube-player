@@ -1,4 +1,4 @@
-modules.selectors = {
+export default {
   CHROME_BOTTOM: '.ytp-chrome-bottom',
   GRADIANT_BOTTOM: '.ytp-gradient-bottom',
   NEXT_BUTTON: '.ytp-search-next-btn',
