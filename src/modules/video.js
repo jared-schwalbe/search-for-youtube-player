@@ -1,12 +1,17 @@
-import classes from './classes.js';
-import selectors from './selectors.js';
+import selectors from './selectors';
 
-export function seekToResult() {
-  document.dispatchEvent(new CustomEvent('seek', {
-    detail: {
-      seconds: state.results[state.index]
-    }
-  }));
+export function hasCaptions() {
+  const subtitlesBtnVisible = $(selectors.SUBTITLES_BUTTON).is(':visible');
+  const subtitlesBtnEnabled = $(selectors.SUBTITLES_ICON).attr('fill-opacity') === '1';
+  return subtitlesBtnVisible && subtitlesBtnEnabled;
+}
+
+export function isOnPage() {
+  return $(selectors.VIDEO) && $(selectors.VIDEO).get(0);
+}
+
+export function getCurrentTime() {
+  return $(selectors.VIDEO).get(0).currentTime;
 }
 
 // an easy way to show the video controls is to fake a mousemove event on the video player
@@ -30,16 +35,11 @@ export function hideControls() {
   videoPlayer.dispatchEvent(new MouseEvent('mouseleave'));
 }
 
-export function hasCaptions() {
-  const subtitlesBtnVisible = $(selectors.SUBTITLES_BUTTON).is(':visible');
-  const subtitlesBtnEnabled = $(selectors.SUBTITLES_ICON).attr('fill-opacity') === '1';
-  return subtitlesBtnVisible && subtitlesBtnEnabled;
-}
-
-export function isOnPage() {
-  return $(selectors.VIDEO) && $(selectors.VIDEO).get(0);
-}
-
-export function getCurrentTime() {
-  return $(selectors.VIDEO).get(0).currentTime;
+// the custom 'seek' event is added in app.js
+export function seekToResult() {
+  document.dispatchEvent(new CustomEvent('seek', {
+    detail: {
+      seconds: state.results[state.index],
+    },
+  }));
 }

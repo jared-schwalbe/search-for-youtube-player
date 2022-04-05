@@ -8,5 +8,5 @@ export default {
   SEARCH_LEFT_WRAPPER_FULLSCREEN: 'ytp-search-left-wrapper--fs',
   SEARCH_MENU_FULLSCREEN: 'ytp-search-menu--fs',
   SEARCH_RESULTS_FULLSCREEN: 'ytp-search-results--fs',
-  TOOLTIP: 'ytp-tooltip'
+  TOOLTIP: 'ytp-tooltip',
 };

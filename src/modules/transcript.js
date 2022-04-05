@@ -1,5 +1,4 @@
-import classes from './classes.js';
-import selectors from './selectors.js';
+import selectors from './selectors';
 
 export function open() {
   $(selectors.TRANSCRIPT).attr('visibility', 'ENGAGEMENT_PANEL_VISIBILITY_EXPANDED');
@@ -26,7 +25,7 @@ export function isLoaded() {
 }
 
 export function parse() {
-  state.transcript = $(selectors.TRANSCRIPT_ITEM).map((i, item) => {
+  state.transcript = $(selectors.TRANSCRIPT_ITEM).map((_, item) => {
     const text = $(item).find(selectors.TRANSCRIPT_TEXT)
       .text()
       .toLowerCase()
@@ -42,7 +41,7 @@ export function parse() {
       .replace('\n', '')
       .trim()
       .split(':')
-      .reduce((s, e, i, a) => s + parseInt(e) * Math.pow(60, a.length - i - 1), 0);
+      .reduce((s, e, i, a) => s + parseInt(e, 10) * 60 ** (a.length - i - 1), 0);
 
     return { text, timestamp };
   });

@@ -1,7 +1,11 @@
-import classes from './classes.js';
-import selectors from './selectors.js';
-import * as menu from './menu.js';
-import * as video from './video.js';
+import classes from './classes';
+import selectors from './selectors';
+import * as menu from './menu';
+import * as video from './video';
+
+export function remove() {
+  $(selectors.SEARCH_BUTTON).remove();
+}
 
 export async function insert() {
   if ($(selectors.SEARCH_BUTTON).length) {
@@ -15,7 +19,7 @@ export async function insert() {
   $(searchButton).addClass(classes.BUTTON);
   $(searchButton).addClass(classes.SEARCH_BUTTON);
 
-  $(searchButton).on('click', e => {
+  $(searchButton).on('click', () => {
     if (!$(selectors.SEARCH_MENU).is(':visible')) {
       $(selectors.TOOLTIP).hide();
       menu.show();
@@ -37,16 +41,16 @@ export async function insert() {
     state.showControlsInterval.button = setInterval(video.showControls, 100);
 
     $(selectors.TOOLTIP).css({
-      'display': 'block',
+      display: 'block',
       'max-width': 'none',
-      'opacity': '1',
-      'text-align': 'center'
+      opacity: '1',
+      'text-align': 'center',
     });
 
     $(selectors.TOOLTIP_TEXT).text('Search transcript');
     $(selectors.TOOLTIP_TEXT).css({
-      'display': 'block',
-      'whitespace': 'nowrap'
+      display: 'block',
+      whitespace: 'nowrap',
     });
 
     // remove the "preview" image when still in the tooltip
@@ -60,14 +64,14 @@ export async function insert() {
     const searchBtnMidpoint = $(selectors.SEARCH_BUTTON).outerWidth() / 2;
     const tooltipMidpoint = document.webkitIsFullScreen ? 89 : 59;
     const left = controlsLeft + searchBtnLeft + searchBtnMidpoint - tooltipMidpoint;
-  
+
     const videoHeight = $(selectors.VIDEO_PLAYER).height();
     const offset = document.webkitIsFullScreen ? 94 : 87;
     const top = videoHeight - offset;
 
     $(selectors.TOOLTIP).css({
-      'left': `${left}px`,
-      'top': `${top}px`
+      left: `${left}px`,
+      top: `${top}px`,
     });
 
     // transitioning from the timeline tooltip to the button tooltip causes it to be hidden
@@ -87,8 +91,4 @@ export async function insert() {
 
   // finally, add the button to the DOM at the beginning of the video player's right controls
   $(selectors.RIGHT_CONTROLS).prepend(searchButton);
-}
-
-export function remove() {
-  $(selectors.SEARCH_BUTTON).remove();
 }

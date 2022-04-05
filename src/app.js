@@ -1,10 +1,10 @@
 import $ from 'jquery';
 
-import selectors from './modules/selectors.js';
-import * as button from './modules/button.js';
-import * as menu from './modules/menu.js';
-import * as video from './modules/video.js';
-import * as transcript from './modules/transcript.js';
+import selectors from './modules/selectors';
+import * as button from './modules/button';
+import * as menu from './modules/menu';
+import * as video from './modules/video';
+import * as transcript from './modules/transcript';
 
 const initialState = {
   query: '',
@@ -17,14 +17,15 @@ const initialState = {
   },
 };
 
-window.$ = window.jQuery = $;
-window.state = Object.assign({}, initialState);
+window.$ = $;
+window.jQuery = $;
+window.state = { ...initialState };
 
 // content scripts are executed in an "isolated world" environment.
 // so we need to inject this listener into the DOM so we can interact
 // with the "main world" and access the video player's seekTo API.
 function addSeekEvent(showControls) {
-  document.addEventListener('seek', e => {
+  document.addEventListener('seek', (e) => {
     document.querySelector('#movie_player').seekTo(e.detail.seconds);
     showControls();
   });

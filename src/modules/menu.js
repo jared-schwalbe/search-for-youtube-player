@@ -1,73 +1,51 @@
 import ResizeSensor from 'resize-sensor';
 
-import classes from './classes.js';
-import selectors from './selectors.js';
-import * as video from './video.js';
+import classes from './classes';
+import selectors from './selectors';
+import * as video from './video';
 import * as transcript from './transcript';
 
-export async function insert() {
-  if ($(selectors.SEARCH_MENU).length) {
-    return;
-  }
-
-  // load html for the search menu
-  const html = await Promise.resolve($.get(chrome.runtime.getURL('html/searchMenu.html')));
-  $(selectors.SETTINGS_MENU).after(html);
-
-  if (document.webkitIsFullScreen) {
-    addFullscreenClasses();
-  }
-
-  $(document).on('fullscreenchange', () => {
-    updateResults(); // resize the results width
-    document.webkitIsFullScreen ? addFullscreenClasses() : removeFullscreenClasses();
-  });
-
-  $(selectors.SEARCH_INPUT).on('keydown', e => {
-    e.stopPropagation(); // stop youtube's shortcut keys
-    if (e.keyCode === 37 || e.keyCode === 39) {
-      e.preventDefault(); // prevent left/right arrow key default behavior
-    }
-  });
-
-  $(selectors.SEARCH_INPUT).on('keyup', e => {
-    if (e.currentTarget.value === '') {
-      updateResults(0, 0);
-    } else if (e.keyCode === 13) {
-      search('next');
-    } else if (e.keyCode === 37 && state.index !== -1) {
-      prev();
-    } else if (e.keyCode === 39 && state.index !== -1) {
-      next();
-    }
-  });
-
-  $(selectors.PREV_BUTTON).on('click', () => {
-    if (state.query !== getInputValue() || state.index === -1) {
-      search('prev');
-    } else {
-      prev();
-    }
-  });
-
-  $(selectors.NEXT_BUTTON).on('click', () => {
-    if (state.query !== getInputValue() || state.index === -1) {
-      search('next');
-    } else {
-      next();
-    }
-  });
-
-  // hide search menu when player resizes
-  new ResizeSensor($(selectors.VIDEO_PLAYER), () => {
-    if ($(selectors.SEARCH_MENU).is(':visible')) {
-      hide();
-    }
-  });
+function addFullscreenClasses() {
+  $(selectors.SEARCH_MENU).addClass(classes.SEARCH_MENU_FULLSCREEN);
+  $(selectors.SEARCH_LEFT_WRAPPER).addClass(classes.SEARCH_LEFT_WRAPPER_FULLSCREEN);
+  $(selectors.SEARCH_RESULTS).addClass(classes.SEARCH_RESULTS_FULLSCREEN);
+  $(selectors.PREV_BUTTON).addClass(classes.PREV_BUTTON_FULLSCREEN);
+  $(selectors.NEXT_BUTTON).addClass(classes.NEXT_BUTTON_FULLSCREEN);
 }
 
-export function remove() {
-  $(selectors.SEARCH_MENU).remove();
+function removeFullscreenClasses() {
+  $(selectors.SEARCH_MENU).removeClass(classes.SEARCH_MENU_FULLSCREEN);
+  $(selectors.SEARCH_LEFT_WRAPPER).removeClass(classes.SEARCH_LEFT_WRAPPER_FULLSCREEN);
+  $(selectors.SEARCH_RESULTS).removeClass(classes.SEARCH_RESULTS_FULLSCREEN);
+  $(selectors.PREV_BUTTON).removeClass(classes.PREV_BUTTON_FULLSCREEN);
+  $(selectors.NEXT_BUTTON).removeClass(classes.NEXT_BUTTON_FULLSCREEN);
+}
+
+function onEscape(event) {
+  if (event.keyCode === 27) {
+    hide(); // eslint-disable-line no-use-before-define
+  }
+}
+
+function onClickOutside(event) {
+  const eClass = $(event.target).attr('class');
+  if (typeof eClass === 'undefined' || !eClass.includes('ytp-search')) {
+    hide(); // eslint-disable-line no-use-before-define
+  }
+}
+
+export function updateResults(current, total) {
+  if (current !== undefined && total !== undefined) {
+    $(selectors.SEARCH_RESULTS).text(`${current} of ${total}`);
+  } else {
+    $(selectors.SEARCH_RESULTS).text(`${state.index + 1} of ${state.results.length}`);
+  }
+
+  const searchMenuWidth = $(selectors.SEARCH_MENU).width();
+  const searchRightWidth = $(selectors.SEARCH_RIGHT_WRAPPER).width();
+  const width = searchMenuWidth - searchRightWidth;
+
+  $(selectors.SEARCH_LEFT_WRAPPER).css('width', `${width}px`);
 }
 
 export function show() {
@@ -79,9 +57,9 @@ export function show() {
   const left = controlsLeft + searchBtnLeft + searchBtnMidpt - searchMenuMidpt;
 
   $(selectors.SEARCH_MENU).css({
-    'right': '',
-    'left': `${left}px`,
-    'bottom': bottom
+    right: '',
+    left: `${left}px`,
+    bottom,
   });
 
   $(selectors.SETTINGS_MENU).hide();
@@ -110,7 +88,7 @@ export function hide() {
 
   $(selectors.SEARCH_MENU).hide();
   $(selectors.SEARCH_INPUT).val('');
-  
+
   $(selectors.CHROME_BOTTOM).css('opacity', '');
   $(selectors.GRADIANT_BOTTOM).css('opacity', '');
   $(selectors.TOOLTIP).css('opacity', '');
@@ -120,6 +98,10 @@ export function hide() {
 
   $(document).unbind('keyup', onEscape);
   $(document).unbind('click', onClickOutside);
+}
+
+export function getInputValue() {
+  return $(selectors.SEARCH_INPUT).val().toLowerCase().trim();
 }
 
 function search(direction) {
@@ -156,7 +138,7 @@ function search(direction) {
   video.seekToResult();
 }
 
-function next() {
+export function next() {
   if (state.index === state.results.length - 1) {
     state.index = 0;
   } else {
@@ -167,7 +149,7 @@ function next() {
   video.seekToResult();
 }
 
-function prev() {
+export function prev() {
   if (state.index === 0) {
     state.index = state.results.length - 1;
   } else {
@@ -178,49 +160,71 @@ function prev() {
   video.seekToResult();
 }
 
-export function updateResults(current, total) {
-  if (current !== undefined && total !== undefined) {
-    $(selectors.SEARCH_RESULTS).text(`${current} of ${total}`);
-  } else {
-    $(selectors.SEARCH_RESULTS).text(`${state.index + 1} of ${state.results.length}`);
+export function remove() {
+  $(selectors.SEARCH_MENU).remove();
+}
+
+export async function insert() {
+  if ($(selectors.SEARCH_MENU).length) {
+    return;
   }
 
-  const searchMenuWidth = $(selectors.SEARCH_MENU).width();
-  const searchRightWidth = $(selectors.SEARCH_RIGHT_WRAPPER).width();
-  const width = searchMenuWidth - searchRightWidth;
+  // load html for the search menu
+  const html = await Promise.resolve($.get(chrome.runtime.getURL('html/searchMenu.html')));
+  $(selectors.SETTINGS_MENU).after(html);
 
-  $(selectors.SEARCH_LEFT_WRAPPER).css('width', `${width}px`);
-}
-
-export function getInputValue() {
-  return $(selectors.SEARCH_INPUT).val().toLowerCase().trim();
-}
-
-function onEscape(event) {
-  if (event.keyCode === 27) {
-    hide();
+  if (document.webkitIsFullScreen) {
+    addFullscreenClasses();
   }
-}
 
-function onClickOutside(event) {
-  const eClass = $(event.target).attr('class');
-  if (typeof eClass === 'undefined' || !eClass.includes('ytp-search')) {
-    hide();
-  }
-}
+  $(document).on('fullscreenchange', () => {
+    if (document.webkitIsFullScreen) {
+      addFullscreenClasses();
+    } else {
+      removeFullscreenClasses();
+    }
+    updateResults(); // resize the results width
+  });
 
-function addFullscreenClasses() {
-  $(selectors.SEARCH_MENU).addClass(classes.SEARCH_MENU_FULLSCREEN);
-  $(selectors.SEARCH_LEFT_WRAPPER).addClass(classes.SEARCH_LEFT_WRAPPER_FULLSCREEN);
-  $(selectors.SEARCH_RESULTS).addClass(classes.SEARCH_RESULTS_FULLSCREEN);
-  $(selectors.PREV_BUTTON).addClass(classes.PREV_BUTTON_FULLSCREEN);
-  $(selectors.NEXT_BUTTON).addClass(classes.NEXT_BUTTON_FULLSCREEN);
-}
+  $(selectors.SEARCH_INPUT).on('keydown', (e) => {
+    e.stopPropagation(); // stop youtube's shortcut keys
+    if (e.keyCode === 37 || e.keyCode === 39) {
+      e.preventDefault(); // prevent left/right arrow key default behavior
+    }
+  });
 
-function removeFullscreenClasses() {
-  $(selectors.SEARCH_MENU).removeClass(classes.SEARCH_MENU_FULLSCREEN);
-  $(selectors.SEARCH_LEFT_WRAPPER).removeClass(classes.SEARCH_LEFT_WRAPPER_FULLSCREEN);
-  $(selectors.SEARCH_RESULTS).removeClass(classes.SEARCH_RESULTS_FULLSCREEN);
-  $(selectors.PREV_BUTTON).removeClass(classes.PREV_BUTTON_FULLSCREEN);
-  $(selectors.NEXT_BUTTON).removeClass(classes.NEXT_BUTTON_FULLSCREEN);
+  $(selectors.SEARCH_INPUT).on('keyup', (e) => {
+    if (e.currentTarget.value === '') {
+      updateResults(0, 0);
+    } else if (e.keyCode === 13) {
+      search('next');
+    } else if (e.keyCode === 37 && state.index !== -1) {
+      prev();
+    } else if (e.keyCode === 39 && state.index !== -1) {
+      next();
+    }
+  });
+
+  $(selectors.PREV_BUTTON).on('click', () => {
+    if (state.query !== getInputValue() || state.index === -1) {
+      search('prev');
+    } else {
+      prev();
+    }
+  });
+
+  $(selectors.NEXT_BUTTON).on('click', () => {
+    if (state.query !== getInputValue() || state.index === -1) {
+      search('next');
+    } else {
+      next();
+    }
+  });
+
+  // hide search menu when player resizes
+  ResizeSensor($(selectors.VIDEO_PLAYER), () => {
+    if ($(selectors.SEARCH_MENU).is(':visible')) {
+      hide();
+    }
+  });
 }

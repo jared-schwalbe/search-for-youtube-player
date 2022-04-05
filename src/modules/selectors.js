@@ -27,5 +27,5 @@ export default {
   TRANSCRIPT_TEXT: '.segment-text,.cue',
   TRANSCRIPT_TIMESTAMP: '.segment-timestamp,.cue-group-start-offset',
   VIDEO: 'video',
-  VIDEO_PLAYER: '.html5-video-player'
+  VIDEO_PLAYER: '.html5-video-player',
 };
