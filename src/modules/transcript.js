@@ -1,5 +1,7 @@
 import selectors from './selectors';
 
+// need to move the transcript into view to get YouTube to load it
+// but we still want to keep it hidden from the user
 export function open() {
   $(selectors.TRANSCRIPT).attr('visibility', 'ENGAGEMENT_PANEL_VISIBILITY_EXPANDED');
   $(selectors.TRANSCRIPT).css({

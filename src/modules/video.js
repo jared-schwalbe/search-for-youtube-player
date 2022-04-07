@@ -14,7 +14,7 @@ export function getCurrentTime() {
   return $(selectors.VIDEO).get(0).currentTime;
 }
 
-// an easy way to show the video controls is to fake a mousemove event on the video player
+// to show the video controls we fake a mousemove event on the video player
 export function showControls() {
   const videoPlayer = document.querySelector('#movie_player');
   const videoPlayerPosition = videoPlayer.getBoundingClientRect();
@@ -28,7 +28,6 @@ export function showControls() {
   }));
 }
 
-// and to hide the controls, simulate a mouseleave event
 export function hideControls() {
   const videoPlayer = document.querySelector('#movie_player');
 

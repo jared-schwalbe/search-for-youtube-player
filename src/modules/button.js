@@ -3,24 +3,26 @@ import selectors from './selectors';
 import * as menu from './menu';
 import * as video from './video';
 
-export function remove() {
-  $(selectors.SEARCH_BUTTON).remove();
-}
+// let showTooltipInterval;
 
 export async function insert() {
   if ($(selectors.SEARCH_BUTTON).length) {
     return;
   }
 
-  // load html for the search button into the a new DOM element
+  // load the html for the search button into a new button element
+  // then insert it into the beginning of the video player's controls
   const searchButton = document.createElement('button');
   const html = await Promise.resolve($.get(chrome.runtime.getURL('html/searchButton.html')));
   $(searchButton).html(html);
   $(searchButton).addClass(classes.BUTTON);
   $(searchButton).addClass(classes.SEARCH_BUTTON);
+  $(searchButton).attr('data-tooltip-target-id', 'ytp-search-button');
+  $(selectors.RIGHT_CONTROLS).prepend(searchButton);
 
   $(searchButton).on('click', () => {
     if (!$(selectors.SEARCH_MENU).is(':visible')) {
+      $(selectors.TOOLTIP).removeClass('ytp-force-show');
       $(selectors.TOOLTIP).hide();
       menu.show();
     } else {
@@ -40,10 +42,10 @@ export async function insert() {
     // keep video controls visible while menu is shown
     state.showControlsInterval.button = setInterval(video.showControls, 100);
 
+    $(selectors.TOOLTIP).addClass('ytp-force-show');
     $(selectors.TOOLTIP).css({
-      display: 'block',
-      'max-width': 'none',
       opacity: '1',
+      'max-width': 'none',
       'text-align': 'center',
     });
 
@@ -53,7 +55,7 @@ export async function insert() {
       whitespace: 'nowrap',
     });
 
-    // remove the "preview" image when still in the tooltip
+    // remove the "preview" image if it's in the tooltip
     if ($(selectors.TOOLTIP).hasClass(classes.PREVIEW)) {
       $(selectors.TOOLTIP).removeClass(classes.PREVIEW);
       $(selectors.TOOLTIP_BG).css('background', '');
@@ -73,22 +75,16 @@ export async function insert() {
       left: `${left}px`,
       top: `${top}px`,
     });
-
-    // transitioning from the timeline tooltip to the button tooltip causes it to be hidden
-    // so just show it again after a brief delay (causes a flashing effect but whatever)
-    setTimeout(() => {
-      $(selectors.TOOLTIP).css('display', 'block');
-    }, 100);
   });
 
   $(searchButton).on('mouseleave', () => {
-    if ($(selectors.TOOLTIP).length) {
-      $(selectors.TOOLTIP).css('display', 'none');
-    }
     clearInterval(state.showControlsInterval.button);
+    $(selectors.TOOLTIP).removeClass('ytp-force-show');
+    $(selectors.TOOLTIP).css('display', 'none');
     video.hideControls();
   });
+}
 
-  // finally, add the button to the DOM at the beginning of the video player's right controls
-  $(selectors.RIGHT_CONTROLS).prepend(searchButton);
+export function remove() {
+  $(selectors.SEARCH_BUTTON).remove();
 }

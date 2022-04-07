@@ -21,9 +21,9 @@ window.$ = $;
 window.jQuery = $;
 window.state = { ...initialState };
 
-// content scripts are executed in an "isolated world" environment.
+// content scripts are executed in an "isolated world" environment
 // so we need to inject this listener into the DOM so we can interact
-// with the "main world" and access the video player's seekTo API.
+// with the "main world" and access the video player's seekTo API
 function addSeekEvent(showControls) {
   document.addEventListener('seek', (e) => {
     document.querySelector('#movie_player').seekTo(e.detail.seconds);
@@ -31,7 +31,7 @@ function addSeekEvent(showControls) {
   });
 }
 
-// utilize the unused 'reset' event to inject our 'seek' custom event into the DOM
+// utilize the unused 'reset' event to inject our custom 'seek' event into the DOM
 document.documentElement.setAttribute('onreset', `(${addSeekEvent})(${video.showControls})`);
 document.documentElement.dispatchEvent(new CustomEvent('reset'));
 

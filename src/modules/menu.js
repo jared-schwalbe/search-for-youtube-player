@@ -5,6 +5,12 @@ import selectors from './selectors';
 import * as video from './video';
 import * as transcript from './transcript';
 
+// event keyCode values
+const ENTER = 13;
+const ESCAPE = 27;
+const LEFT_ARROW = 37;
+const RIGHT_ARROW = 39;
+
 function addFullscreenClasses() {
   $(selectors.SEARCH_MENU).addClass(classes.SEARCH_MENU_FULLSCREEN);
   $(selectors.SEARCH_LEFT_WRAPPER).addClass(classes.SEARCH_LEFT_WRAPPER_FULLSCREEN);
@@ -22,7 +28,7 @@ function removeFullscreenClasses() {
 }
 
 function onEscape(event) {
-  if (event.keyCode === 27) {
+  if (event.keyCode === ESCAPE) {
     hide(); // eslint-disable-line no-use-before-define
   }
 }
@@ -57,8 +63,8 @@ export function show() {
   const left = controlsLeft + searchBtnLeft + searchBtnMidpt - searchMenuMidpt;
 
   $(selectors.SEARCH_MENU).css({
-    right: '',
     left: `${left}px`,
+    right: '',
     bottom,
   });
 
@@ -75,10 +81,7 @@ export function show() {
   $(selectors.TOOLTIP).css('opacity', '0');
 
   $(document).on('keyup', onEscape);
-
-  setTimeout(() => {
-    $(document).on('click', '*', onClickOutside);
-  }, 100);
+  $(document).on('click', '*', onClickOutside);
 }
 
 export function hide() {
@@ -160,10 +163,6 @@ export function prev() {
   video.seekToResult();
 }
 
-export function remove() {
-  $(selectors.SEARCH_MENU).remove();
-}
-
 export async function insert() {
   if ($(selectors.SEARCH_MENU).length) {
     return;
@@ -188,7 +187,7 @@ export async function insert() {
 
   $(selectors.SEARCH_INPUT).on('keydown', (e) => {
     e.stopPropagation(); // stop youtube's shortcut keys
-    if (e.keyCode === 37 || e.keyCode === 39) {
+    if (e.keyCode === LEFT_ARROW || e.keyCode === RIGHT_ARROW) {
       e.preventDefault(); // prevent left/right arrow key default behavior
     }
   });
@@ -196,11 +195,11 @@ export async function insert() {
   $(selectors.SEARCH_INPUT).on('keyup', (e) => {
     if (e.currentTarget.value === '') {
       updateResults(0, 0);
-    } else if (e.keyCode === 13) {
+    } else if (e.keyCode === ENTER) {
       search('next');
-    } else if (e.keyCode === 37 && state.index !== -1) {
+    } else if (e.keyCode === LEFT_ARROW && state.index !== -1) {
       prev();
-    } else if (e.keyCode === 39 && state.index !== -1) {
+    } else if (e.keyCode === RIGHT_ARROW && state.index !== -1) {
       next();
     }
   });
@@ -228,4 +227,8 @@ export async function insert() {
       hide();
     }
   });
+}
+
+export function remove() {
+  $(selectors.SEARCH_MENU).remove();
 }
