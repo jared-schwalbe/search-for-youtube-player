@@ -168,7 +168,7 @@ export async function insert() {
     return;
   }
 
-  // load html for the search menu
+  // load the html for the search menu
   const html = await Promise.resolve($.get(chrome.runtime.getURL('html/searchMenu.html')));
   $(selectors.SETTINGS_MENU).after(html);
 

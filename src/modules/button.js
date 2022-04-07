@@ -10,27 +10,23 @@ export async function insert() {
     return;
   }
 
-  // load the html for the search button into a new button element
-  // then insert it into the beginning of the video player's controls
-  const searchButton = document.createElement('button');
+  // load the html for the search button
   const html = await Promise.resolve($.get(chrome.runtime.getURL('html/searchButton.html')));
-  $(searchButton).html(html);
-  $(searchButton).addClass(classes.BUTTON);
-  $(searchButton).addClass(classes.SEARCH_BUTTON);
-  $(searchButton).attr('data-tooltip-target-id', 'ytp-search-button');
-  $(selectors.RIGHT_CONTROLS).prepend(searchButton);
+  $(selectors.RIGHT_CONTROLS).prepend(html);
 
-  $(searchButton).on('click', () => {
+  $(selectors.SEARCH_BUTTON).on('click', () => {
     if (!$(selectors.SEARCH_MENU).is(':visible')) {
+      $(selectors.SEARCH_BUTTON).attr('aria-expanded', 'true');
       $(selectors.TOOLTIP).removeClass('ytp-force-show');
       $(selectors.TOOLTIP).hide();
       menu.show();
     } else {
+      $(selectors.SEARCH_BUTTON).attr('aria-expanded', 'false');
       menu.hide();
     }
   });
 
-  $(searchButton).on('mouseover', () => {
+  $(selectors.SEARCH_BUTTON).on('mouseover', () => {
     if ($(selectors.SETTINGS_MENU).is(':visible') || $(selectors.SEARCH_MENU).is(':visible')) {
       return;
     }
@@ -77,7 +73,7 @@ export async function insert() {
     });
   });
 
-  $(searchButton).on('mouseleave', () => {
+  $(selectors.SEARCH_BUTTON).on('mouseleave', () => {
     clearInterval(state.showControlsInterval.button);
     $(selectors.TOOLTIP).removeClass('ytp-force-show');
     $(selectors.TOOLTIP).css('display', 'none');
