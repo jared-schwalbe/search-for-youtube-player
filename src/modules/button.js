@@ -3,8 +3,6 @@ import selectors from './selectors';
 import * as menu from './menu';
 import * as video from './video';
 
-// let showTooltipInterval;
-
 export async function insert() {
   if ($(selectors.SEARCH_BUTTON).length) {
     return;

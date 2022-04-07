@@ -14,15 +14,12 @@ export function getCurrentTime() {
   return $(selectors.VIDEO).get(0).currentTime;
 }
 
-// to show the video controls we fake a mousemove event on the video player
 export function showControls() {
   const videoPlayer = document.querySelector('#movie_player');
   const videoPlayerPosition = videoPlayer.getBoundingClientRect();
 
+  // to show the video controls we fake a mousemove event on the video player
   videoPlayer.dispatchEvent(new MouseEvent('mousemove', {
-    view: window,
-    bubbles: true,
-    cancelable: true,
     clientX: videoPlayerPosition.left + Math.round(Math.random() * 100),
     clientY: videoPlayerPosition.top + Math.round(Math.random() * 100),
   }));
@@ -31,6 +28,7 @@ export function showControls() {
 export function hideControls() {
   const videoPlayer = document.querySelector('#movie_player');
 
+  // to hide the video controls we fake a mouseleave event on the video player
   videoPlayer.dispatchEvent(new MouseEvent('mouseleave'));
 }
 
