@@ -30,13 +30,29 @@ function removeFullscreenClasses() {
 function onEscape(event) {
   if (event.keyCode === ESCAPE) {
     hide(); // eslint-disable-line no-use-before-define
+    video.showControls();
   }
 }
 
 function onClickOutside(event) {
-  const eClass = $(event.target).attr('class');
-  if (typeof eClass === 'undefined' || !eClass.includes('ytp-search')) {
+  const targetClasses = Array.from(event.target.classList);
+  const videoClasses = [
+    classes.VIDEO,
+    classes.VIDEO_PLAYER,
+    classes.PLAYER_CONTENT,
+    classes.IV_PLAYER_CONTENT,
+    classes.IV_VIDEO_CONTENT,
+  ];
+
+  if (!targetClasses.length || !targetClasses.includes('ytp-search')) {
     hide(); // eslint-disable-line no-use-before-define
+  }
+  if (targetClasses.some((c) => videoClasses.includes(c))) {
+    event.preventDefault();
+    event.stopPropagation();
+    video.showControls();
+  } else {
+    video.hideControls();
   }
 }
 
@@ -80,8 +96,8 @@ export function show() {
   $(selectors.GRADIANT_BOTTOM).css('opacity', '1');
   $(selectors.TOOLTIP).css('opacity', '0');
 
-  $(document).on('keyup', onEscape);
-  $(document).on('click', '*', onClickOutside);
+  document.addEventListener('keyup', onEscape, true);
+  document.addEventListener('click', onClickOutside, true);
 }
 
 export function hide() {
@@ -99,8 +115,8 @@ export function hide() {
   clearInterval(state.showControlsInterval.menu);
   video.hideControls();
 
-  $(document).unbind('keyup', onEscape);
-  $(document).unbind('click', onClickOutside);
+  document.removeEventListener('keyup', onEscape, true);
+  document.removeEventListener('click', onClickOutside, true);
 }
 
 export function getInputValue() {

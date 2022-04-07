@@ -1,8 +1,11 @@
 export default {
   CHROME_BOTTOM: '.ytp-chrome-bottom',
   GRADIANT_BOTTOM: '.ytp-gradient-bottom',
+  IV_PLAYER_CONTENT: '.ytp-iv-player-content',
+  IV_VIDEO_CONTENT: '.ytp-iv-video-content',
   NEXT_BUTTON: '.ytp-search-next-btn',
   PLAY_PROGRESS: '.ytp-play-progress',
+  PLAYER_CONTENT: '.ytp-player-content',
   PREV_BUTTON: '.ytp-search-prev-btn',
   PREVIEW: '.ytp-preview',
   RIGHT_CONTROLS: '.ytp-right-controls',
