@@ -79,6 +79,10 @@ export function updateResults(current, total) {
 }
 
 export function show() {
+  $(selectors.SEARCH_BUTTON).attr('aria-expanded', 'true');
+  $(selectors.TOOLTIP).removeClass('ytp-force-show');
+  $(selectors.TOOLTIP).hide();
+
   const controlsLeft = $(selectors.CHROME_BOTTOM).position().left;
   const searchBtnLeft = $(selectors.SEARCH_BUTTON).position().left;
   const searchBtnMidpt = $(selectors.SEARCH_BUTTON).outerWidth() / 2;

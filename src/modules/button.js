@@ -14,9 +14,6 @@ export async function insert() {
 
   $(selectors.SEARCH_BUTTON).on('click', () => {
     if (!$(selectors.SEARCH_MENU).is(':visible')) {
-      $(selectors.SEARCH_BUTTON).attr('aria-expanded', 'true');
-      $(selectors.TOOLTIP).removeClass('ytp-force-show');
-      $(selectors.TOOLTIP).hide();
       menu.show();
     } else {
       $(selectors.SEARCH_BUTTON).attr('aria-expanded', 'false');
