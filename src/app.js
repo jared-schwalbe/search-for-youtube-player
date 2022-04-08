@@ -26,7 +26,7 @@ window.state = { ...initialState };
 // with the "main world" and access the video player's seekTo API
 function addSeekEvent(showControls) {
   document.addEventListener('seek', (e) => {
-    document.querySelector('#movie_player').seekTo(e.detail.seconds);
+    document.getElementById('movie_player').seekTo(e.detail.seconds);
     showControls();
   });
 }

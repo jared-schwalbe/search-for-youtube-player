@@ -6,12 +6,8 @@ export function hasCaptions() {
   return subtitlesBtnVisible && subtitlesBtnEnabled;
 }
 
-export function getCurrentTime() {
-  return $(selectors.VIDEO).currentTime;
-}
-
 export function showControls() {
-  const videoPlayer = document.querySelector('#movie_player');
+  const videoPlayer = document.getElementById('movie_player');
   const videoPlayerPosition = videoPlayer.getBoundingClientRect();
 
   // to show the video controls we fake a mousemove event on the video player
@@ -22,7 +18,7 @@ export function showControls() {
 }
 
 export function hideControls() {
-  const videoPlayer = document.querySelector('#movie_player');
+  const videoPlayer = document.getElementById('movie_player');
 
   // to hide the video controls we fake a mouseleave event on the video player
   videoPlayer.dispatchEvent(new MouseEvent('mouseleave'));

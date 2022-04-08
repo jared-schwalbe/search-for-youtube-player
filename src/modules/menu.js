@@ -45,21 +45,21 @@ function onClickOutside(event) {
     classes.IV_VIDEO_CONTENT,
   ];
 
-  const videoPlayer = document.querySelector(selectors.VIDEO_PLAYER);
-
   if (!targetClass || !targetClass.includes('ytp-search')) {
     // hide the search menu when anything outside it is clicked
     // eslint-disable-next-line no-use-before-define
     hide();
 
+    const videoPlayer = document.querySelector(selectors.VIDEO_PLAYER);
+    if (!$.contains(videoPlayer, event.target)) {
+      // hide the controls when clicking outside the video player
+      video.hideControls();
+    }
+
     if (targetClasses.some((c) => videoClasses.includes(c))) {
       // prevent the video from pausing when it is clicked
       event.preventDefault();
       event.stopPropagation();
-    }
-    if (!$.contains(videoPlayer, event.target)) {
-      // hide the controls when clicking outside the video player
-      video.hideControls();
     }
   }
 }
@@ -140,7 +140,7 @@ function search(direction) {
     return;
   }
 
-  const currentTime = video.getCurrentTime();
+  const { currentTime } = $(selectors.VIDEO).get(0);
 
   if (direction === 'next') {
     state.index = 0;
@@ -245,7 +245,7 @@ export async function insert() {
 
   // hide search menu when player resizes
   // eslint-disable-next-line no-new
-  new ResizeSensor($(selectors.VIDEO_PLAYER), () => {
+  new ResizeSensor(document.getElementById('player'), () => {
     if ($(selectors.SEARCH_MENU).is(':visible')) {
       hide();
       video.hideControls();
