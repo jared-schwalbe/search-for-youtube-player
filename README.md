@@ -2,7 +2,7 @@
 
 A Google Chrome browser extension that adds search functionality to the YouTube video player.
 
-![screenshot](src/img/screenshot.png)
+![screenshot](src/img/screenshot_full.png)
 
 #### Notes ####
 
