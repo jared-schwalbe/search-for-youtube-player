@@ -62,16 +62,15 @@ function setup() {
   button.remove();
   menu.remove();
 
-  $(selectors.VIDEO).unbind('loadedmetadata', addSearchControls);
-
-  if (video.isOnPage()) {
-    if (video.getCurrentTime() > 0) {
-      addSearchControls();
-    } else {
-      $(selectors.VIDEO).on('loadedmetadata', addSearchControls);
-    }
+  if (window.location.pathname === '/watch') {
+    // wait for the video controls to load
+    const subtitlesInterval = setInterval(() => {
+      if ($(selectors.RIGHT_CONTROLS).length) {
+        clearInterval(subtitlesInterval);
+        addSearchControls();
+      }
+    }, 100);
   }
 }
 
-setup();
-window.addEventListener('yt-navigate-start', setup, true);
+window.addEventListener('yt-navigate-finish', setup, true);

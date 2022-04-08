@@ -35,6 +35,7 @@ function onEscape(event) {
 }
 
 function onClickOutside(event) {
+  const targetClass = event.target.className;
   const targetClasses = Array.from(event.target.classList);
   const videoClasses = [
     classes.VIDEO,
@@ -44,7 +45,7 @@ function onClickOutside(event) {
     classes.IV_VIDEO_CONTENT,
   ];
 
-  if (!targetClasses.length || !targetClasses.includes('ytp-search')) {
+  if (!targetClasses.length || !targetClass.includes('ytp-search')) {
     hide(); // eslint-disable-line no-use-before-define
   }
   if (targetClasses.some((c) => videoClasses.includes(c))) {

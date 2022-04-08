@@ -6,12 +6,8 @@ export function hasCaptions() {
   return subtitlesBtnVisible && subtitlesBtnEnabled;
 }
 
-export function isOnPage() {
-  return $(selectors.VIDEO) && $(selectors.VIDEO).get(0);
-}
-
 export function getCurrentTime() {
-  return $(selectors.VIDEO).get(0).currentTime;
+  return $(selectors.VIDEO).currentTime;
 }
 
 export function showControls() {
