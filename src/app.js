@@ -34,6 +34,7 @@ function addSeekEvent(showControls) {
 // utilize the unused 'reset' event to inject our custom 'seek' event into the DOM
 document.documentElement.setAttribute('onreset', `(${addSeekEvent})(${video.showControls})`);
 document.documentElement.dispatchEvent(new CustomEvent('reset'));
+document.documentElement.removeAttribute('onreset');
 
 function addSearchControls() {
   if (video.hasCaptions()) {
