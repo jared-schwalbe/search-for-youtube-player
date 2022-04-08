@@ -55,6 +55,9 @@ export async function insert() {
       $(selectors.TOOLTIP_BG).css('background', '');
     }
 
+    // hide the "title" which can contain shortcut text
+    $(selectors.TOOLTIP_TITLE).hide();
+
     const controlsLeft = $(selectors.CHROME_BOTTOM).position().left;
     const searchBtnLeft = $(selectors.SEARCH_BUTTON).position().left;
     const searchBtnMidpoint = $(selectors.SEARCH_BUTTON).outerWidth() / 2;

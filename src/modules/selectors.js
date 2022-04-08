@@ -21,6 +21,7 @@ export default {
   TIME_CURRENT: 'ytd-watch-flexy .ytp-time-current',
   TOOLTIP: 'ytd-watch-flexy .ytp-tooltip',
   TOOLTIP_BG: 'ytd-watch-flexy .ytp-tooltip-bg',
+  TOOLTIP_TITLE: 'ytd-watch-flex .ytp-tooltip-title',
   TOOLTIP_TEXT: 'ytd-watch-flexy .ytp-tooltip-text',
   TOOLTIP_TEXT_WRAPPER: 'ytd-watch-flexy .ytp-tooltip-text-wrapper',
   TRANSCRIPT: 'ytd-engagement-panel-section-list-renderer[target-id=\'engagement-panel-searchable-transcript\'],ytd-engagement-panel-section-list-renderer[target-id=\'engagement-panel-transcript\']',
