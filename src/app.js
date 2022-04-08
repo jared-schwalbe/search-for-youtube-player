@@ -64,10 +64,11 @@ function setup() {
 
   if (window.location.pathname === '/watch') {
     // wait for the video controls to load
+    // then it can take a sec for the subtitles to be enabled
     const subtitlesInterval = setInterval(() => {
       if ($(selectors.RIGHT_CONTROLS).length) {
         clearInterval(subtitlesInterval);
-        addSearchControls();
+        setTimeout(addSearchControls, 500);
       }
     }, 100);
   }
