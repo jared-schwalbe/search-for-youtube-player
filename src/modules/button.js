@@ -83,5 +83,8 @@ export async function insert() {
 }
 
 export function remove() {
+  $(selectors.TOOLTIP).removeClass('ytp-force-show');
+  $(selectors.TOOLTIP).hide();
+
   $(selectors.SEARCH_BUTTON).remove();
 }
